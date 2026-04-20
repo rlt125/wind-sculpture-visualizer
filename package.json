@@ -1,0 +1,13 @@
+{
+  "name": "wind-sculpture-visualizer",
+  "version": "0.1.0",
+  "description": "Browser-only tool that composites wind sculpture videos/GIFs onto customer landscape photos at correct physical scale.",
+  "private": true,
+  "scripts": {
+    "dev": "serve -l 3000 .",
+    "start": "serve -l 3000 ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

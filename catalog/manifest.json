@@ -1,0 +1,24 @@
+[
+  {
+    "id": "sample-sculpture-8ft",
+    "name": "Sample 8ft Spinner",
+    "heightFeet": 8.0,
+    "widthFeet": 2.5,
+    "mp4": "sample-sculpture-8ft.mp4",
+    "gif": "sample-sculpture-8ft.gif",
+    "mp4HasAlpha": false,
+    "chromaKey": null,
+    "thumb": "thumbs/sample-sculpture-8ft.png"
+  },
+  {
+    "id": "sample-sculpture-6ft",
+    "name": "Sample 6ft Kinetic",
+    "heightFeet": 6.0,
+    "widthFeet": 2.0,
+    "mp4": "sample-sculpture-6ft.mp4",
+    "gif": "sample-sculpture-6ft.gif",
+    "mp4HasAlpha": false,
+    "chromaKey": null,
+    "thumb": "thumbs/sample-sculpture-6ft.png"
+  }
+]

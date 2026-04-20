@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wind Sculpture Visualizer</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Wind Sculpture Visualizer</h1>
+      <div class="steps">
+        <span class="step" data-step="1">1. Photo</span>
+        <span class="step" data-step="2">2. Scale</span>
+        <span class="step" data-step="3">3. Sculpture</span>
+        <span class="step" data-step="4">4. Export</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage">
+        <canvas id="stage" width="1280" height="720"></canvas>
+        <div id="drop-hint" class="drop-hint">
+          <p>Drop a landscape photo here, or click to choose one.</p>
+          <input type="file" id="file-input" accept="image/*" />
+        </div>
+      </section>
+
+      <aside class="panel">
+        <!-- Step 1: Upload -->
+        <fieldset class="card" data-card="upload">
+          <legend>1. Upload photo</legend>
+          <button id="btn-choose-file" type="button">Choose photo</button>
+          <p class="hint">JPG or PNG. Nothing leaves your browser.</p>
+        </fieldset>
+
+        <!-- Step 2: Calibrate scale -->
+        <fieldset class="card disabled" data-card="scale">
+          <legend>2. Set scale</legend>
+
+          <div class="tabs">
+            <button class="tab active" data-mode="two-point" type="button">Click 2 points</button>
+            <button class="tab" data-mode="preset" type="button">Use preset reference</button>
+          </div>
+
+          <div class="tab-body" data-body="two-point">
+            <p class="hint">Click two points on something you know the size of (a fence post, a door, a car).</p>
+            <div class="row">
+              <label>Real distance</label>
+              <input id="two-point-distance" type="number" step="0.1" min="0.1" value="6" />
+              <select id="two-point-unit">
+                <option value="ft">ft</option>
+                <option value="m">m</option>
+                <option value="in">in</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+            <div class="row">
+              <button id="btn-two-point-start" type="button">Click 2 points on photo</button>
+              <button id="btn-two-point-clear" type="button" class="ghost">Clear</button>
+            </div>
+          </div>
+
+          <div class="tab-body hidden" data-body="preset">
+            <p class="hint">Pick something you can see in the photo, then drag its height on the image.</p>
+            <div class="row">
+              <label>Reference</label>
+              <select id="preset-ref">
+                <option value="6">Person (6 ft)</option>
+                <option value="7">Door (7 ft)</option>
+                <option value="8">Privacy fence (8 ft)</option>
+                <option value="6-fence">Privacy fence (6 ft)</option>
+                <option value="4">Picket fence (4 ft)</option>
+                <option value="custom">Custom...</option>
+              </select>
+              <input id="preset-custom" type="number" step="0.1" min="0.1" placeholder="feet" class="hidden" />
+            </div>
+            <div class="row">
+              <button id="btn-preset-start" type="button">Draw reference line on photo</button>
+              <button id="btn-preset-clear" type="button" class="ghost">Clear</button>
+            </div>
+          </div>
+
+          <p class="readout" id="scale-readout">Not calibrated yet.</p>
+        </fieldset>
+
+        <!-- Step 3: Pick sculpture -->
+        <fieldset class="card disabled" data-card="sculpture">
+          <legend>3. Place a sculpture</legend>
+          <div id="catalog-grid" class="catalog-grid"></div>
+          <div class="row">
+            <label><input type="checkbox" id="toggle-flip" /> Flip horizontally</label>
+            <label><input type="checkbox" id="toggle-shadow" checked /> Ground shadow</label>
+          </div>
+          <div class="row">
+            <label>Source</label>
+            <select id="source-kind">
+              <option value="auto">Auto (prefer MP4)</option>
+              <option value="mp4">MP4 video</option>
+              <option value="gif">Transparent GIF</option>
+            </select>
+          </div>
+          <p class="hint">Drag the sculpture on the photo to reposition.</p>
+        </fieldset>
+
+        <!-- Step 4: Export -->
+        <fieldset class="card disabled" data-card="export">
+          <legend>4. Export</legend>
+          <div class="row">
+            <button id="btn-save-png" type="button">Save PNG</button>
+            <button id="btn-save-jpg" type="button">Save JPG</button>
+          </div>
+          <div class="row">
+            <label>Video length</label>
+            <input id="video-seconds" type="number" min="1" max="30" value="5" />
+            <span>s</span>
+          </div>
+          <div class="row">
+            <button id="btn-save-video" type="button">Record video</button>
+            <span id="video-status" class="hint"></span>
+          </div>
+        </fieldset>
+      </aside>
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

@@ -101,9 +101,16 @@
             <span>s</span>
           </div>
           <div class="row">
-            <button id="btn-save-video" type="button">Record video</button>
-            <span id="video-status" class="hint"></span>
+            <label title="Wraps the MP4 in a tiny HTML page with autoplay+loop. One file; opens and loops in any browser.">
+              <input type="checkbox" id="wrap-html" />
+              Download as looping HTML (instead of MP4)
+            </label>
           </div>
+          <div class="row">
+            <button id="btn-save-video" type="button">Record video</button>
+            <button id="btn-preview-video" type="button" class="ghost" title="Records, then opens the looping version in a new tab without saving.">Preview</button>
+          </div>
+          <p class="hint" id="video-status"></p>
         </fieldset>
       </aside>
     </main>

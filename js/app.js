@@ -11,7 +11,7 @@
 import { createStage } from "./composite.js";
 import { toFeet } from "./scale.js";
 import { loadCatalog, renderCatalogGrid, loadSource, DRAG_MIME } from "./catalog.js";
-import { saveStill, recordVideo } from "./recorder.js";
+import { saveStill, recordVideo, downloadBlob, loopingHtml, blobToDataUri } from "./recorder.js";
 
 const canvas = document.getElementById("stage");
 const stage = createStage(canvas);
@@ -500,12 +500,74 @@ document.getElementById("btn-save-jpg").addEventListener("click", () => {
 
 const videoStatus = document.getElementById("video-status");
 const videoSecondsInput = document.getElementById("video-seconds");
+const wrapHtmlToggle = document.getElementById("wrap-html");
+
+// Snap the requested seconds up to the nearest whole animation cycle of
+// the longest placed GIF so the recording loops seamlessly. Minimum one
+// cycle, capped so a user asking for 3s doesn't accidentally get 20s.
+function seamlessSeconds(requested) {
+  const periodMs = stage.getLongestGifPeriodMs();
+  if (!periodMs) return requested;
+  const periodSec = periodMs / 1000;
+  const cycles = Math.max(1, Math.round(requested / periodSec));
+  return Number((cycles * periodSec).toFixed(2));
+}
+
+async function recordWithStatus(seconds) {
+  return withExportMode(() =>
+    recordVideo(canvas, seconds, (msg) => (videoStatus.textContent = msg)),
+  );
+}
+
 document.getElementById("btn-save-video").addEventListener("click", async () => {
-  const seconds = Math.max(1, Math.min(30, Number(videoSecondsInput.value) || 5));
+  const requested = Math.max(1, Math.min(30, Number(videoSecondsInput.value) || 5));
+  const seconds = seamlessSeconds(requested);
   try {
-    await withExportMode(() => recordVideo(canvas, seconds, (msg) => (videoStatus.textContent = msg)));
-    videoStatus.textContent = "Saved.";
+    const { blob, ext } = await recordWithStatus(seconds);
+    const stamp = Date.now();
+    if (wrapHtmlToggle?.checked) {
+      videoStatus.textContent = "Packaging HTML…";
+      const dataUri = await blobToDataUri(blob);
+      const html = loopingHtml(dataUri);
+      downloadBlob(new Blob([html], { type: "text/html" }), `wind-sculpture-${stamp}.html`);
+    } else {
+      downloadBlob(blob, `wind-sculpture-${stamp}.${ext}`);
+    }
+    videoStatus.textContent = `Saved (${seconds}s).`;
   } catch (err) {
+    reportErr(err);
+  }
+});
+
+// Preview opens a tab synchronously (so popup blockers allow it), records
+// the video, then fills the tab with the looping-HTML wrapper using a
+// blob URL — no download, no base64 encode.
+document.getElementById("btn-preview-video").addEventListener("click", async () => {
+  const requested = Math.max(1, Math.min(30, Number(videoSecondsInput.value) || 5));
+  const seconds = seamlessSeconds(requested);
+  const win = window.open("", "_blank");
+  if (!win) {
+    reportErr(new Error("Preview blocked by browser — allow popups and retry."));
+    return;
+  }
+  win.document.write(
+    `<!doctype html><meta charset=utf-8><title>Preparing preview…</title>` +
+    `<body style="background:#0b0e12;color:#888;font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0">` +
+    `<p>Recording ${seconds}s preview…</p></body>`,
+  );
+  try {
+    const { blob } = await recordWithStatus(seconds);
+    // Create the object URL in the parent so its lifetime is tied to this
+    // tab rather than the preview tab's document (which gets replaced on
+    // document.open() below). Revoke after 1 hour to free memory.
+    const url = URL.createObjectURL(blob);
+    setTimeout(() => URL.revokeObjectURL(url), 60 * 60 * 1000);
+    win.document.open();
+    win.document.write(loopingHtml(url));
+    win.document.close();
+    videoStatus.textContent = `Preview opened (${seconds}s).`;
+  } catch (err) {
+    win.close();
     reportErr(err);
   }
 });

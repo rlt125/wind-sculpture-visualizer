@@ -102,6 +102,7 @@ export async function loadAnimatedGif(url) {
   // treat this canvas interchangeably with an HTMLImageElement.
   canvas.naturalWidth = W;
   canvas.naturalHeight = H;
+  canvas.periodMs = totalDelay;  // full animation cycle length in ms
   // Compute the bounding box of all non-transparent pixels across EVERY
   // frame. Sizing from just the first frame underestimates the extent of
   // animations that sweep a wider area (spinner blades, swinging arms) and

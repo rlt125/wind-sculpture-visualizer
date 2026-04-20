@@ -491,6 +491,18 @@ export function createStage(canvas) {
     return null;
   }
 
+  // Longest GIF animation period among placed sculptures, in ms. Callers
+  // use this to snap video recordings to a seamless-loop duration. Returns
+  // null if no placed source exposes a period (e.g. all MP4, or static).
+  function getLongestGifPeriodMs() {
+    let longest = 0;
+    for (const s of state.sculptures) {
+      const p = s.source?.el?.periodMs;
+      if (typeof p === "number" && p > longest) longest = p;
+    }
+    return longest > 0 ? longest : null;
+  }
+
   function moveSelectedBy(dxCanvas, dyCanvas) {
     const s = getSelected();
     if (!s || !state.photoFit) return;
@@ -501,7 +513,7 @@ export function createStage(canvas) {
 
   return {
     // lifecycle
-    start, stop, fitPhoto, setExportMode,
+    start, stop, fitPhoto, setExportMode, getLongestGifPeriodMs,
     // photo
     setPhoto,
     // calibration

@@ -3,6 +3,13 @@
 // Reads catalog/manifest.json, renders the thumbnail grid, and resolves an
 // entry to a media source (<video> for MP4, <img> for GIF) on demand.
 
+function formatFeetInches(decimalFeet) {
+  const ft = Math.floor(decimalFeet);
+  const inches = Math.round((decimalFeet - ft) * 12);
+  if (inches === 12) return `${ft + 1}′0″`;
+  return inches === 0 ? `${ft}′` : `${ft}′${inches}″`;
+}
+
 export async function loadCatalog() {
   const res = await fetch("catalog/manifest.json", { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to load catalog: ${res.status}`);
@@ -42,8 +49,17 @@ export function renderCatalogGrid(container, items, onSelect) {
 
     const size = document.createElement("div");
     size.className = "size";
-    size.textContent = `${item.heightFeet} ft`;
+    const h = formatFeetInches(item.heightFeet);
+    const w = item.widthFeet ? ` × ${formatFeetInches(item.widthFeet)} w` : "";
+    size.textContent = `${h} h${w}`;
     el.appendChild(size);
+
+    if (item.price != null) {
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = `$${item.price.toLocaleString()}`;
+      el.appendChild(price);
+    }
 
     el.addEventListener("click", () => {
       container.querySelectorAll(".catalog-item").forEach((c) => c.classList.remove("selected"));

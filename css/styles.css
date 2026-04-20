@@ -236,13 +236,18 @@ input[type="number"] { width: 90px; }
   border-color: var(--accent);
 }
 
+#catalog-filter {
+  width: 100%;
+  margin: 4px 0 8px;
+}
+
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  max-height: 240px;
+  max-height: 420px;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 4px 2px;
 }
 
 .catalog-item {
@@ -288,4 +293,10 @@ input[type="number"] { width: 90px; }
 .catalog-item .size {
   font-size: 10px;
   color: var(--muted);
+}
+
+.catalog-item .price {
+  font-size: 11px;
+  color: var(--accent-2);
+  margin-top: 2px;
 }

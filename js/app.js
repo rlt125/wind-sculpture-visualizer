@@ -30,7 +30,17 @@ stage.start();
 loadCatalog()
   .then((items) => {
     catalogItems = items;
-    renderCatalogGrid(document.getElementById("catalog-grid"), items, onSculpturePick);
+    const grid = document.getElementById("catalog-grid");
+    const filter = document.getElementById("catalog-filter");
+    const render = (q) => {
+      const n = (q || "").trim().toLowerCase();
+      const filtered = n
+        ? items.filter((it) => it.name.toLowerCase().includes(n))
+        : items;
+      renderCatalogGrid(grid, filtered, onSculpturePick);
+    };
+    render("");
+    filter.addEventListener("input", (e) => render(e.target.value));
   })
   .catch((err) => {
     console.warn("Catalog failed to load:", err);

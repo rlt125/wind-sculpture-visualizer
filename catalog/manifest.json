@@ -428,11 +428,8 @@
     "heightFeet": 5.75,
     "widthFeet": 2.583,
     "price": 2100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "FleurFullwPole584x1700.gif",
+    "thumb": "thumbs/fleur-de-lis.png"
   },
   {
     "id": "garden-of-ginger-x-large",
@@ -452,11 +449,8 @@
     "heightFeet": 10.417,
     "widthFeet": 4.083,
     "price": 5300,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "GeminiFullwPole465x1200.gif",
+    "thumb": "thumbs/gemini.png"
   },
   {
     "id": "guardian-angel-medium",

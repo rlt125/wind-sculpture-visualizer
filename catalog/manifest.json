@@ -491,11 +491,8 @@
     "heightFeet": 6.75,
     "widthFeet": 1.75,
     "price": 1100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "MeridianFullwPole375x1500.gif",
+    "thumb": "thumbs/meridian.png"
   },
   {
     "id": "meridian-x-large",
@@ -503,11 +500,8 @@
     "heightFeet": 9,
     "widthFeet": 2.667,
     "price": 2300,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "MeridianFullwPole375x1500.gif",
+    "thumb": "thumbs/meridian.png"
   },
   {
     "id": "mirinda-ii",
@@ -533,11 +527,8 @@
     "heightFeet": 7.583,
     "widthFeet": 3.083,
     "price": 1200,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/mirinda-iv.png",
+    "image": "Mirinda_IV_L.png"
   },
   {
     "id": "nautilus-large",

@@ -84,7 +84,9 @@ export function renderCatalogGrid(container, items, onSelect) {
 }
 
 // Load a playable media element for the given catalog entry + source preference.
-// Returns { kind: "mp4"|"gif", el }. Falls back to GIF if MP4 can't be loaded.
+// Returns { kind: "mp4"|"gif", el }. `kind: "gif"` is used for both animated
+// GIFs and static PNG/JPEG (composite.js only cares about naturalWidth/Height,
+// which our GIF-player canvas and a plain <img> both expose).
 export async function loadSource(item, preference) {
   const wantMp4 = preference === "mp4" || (preference === "auto" && !!item.mp4);
   if (wantMp4 && item.mp4) {
@@ -92,16 +94,29 @@ export async function loadSource(item, preference) {
       const video = await loadVideo(`catalog/${item.mp4}`);
       return { kind: "mp4", el: video };
     } catch (err) {
-      console.warn("MP4 failed, falling back to GIF:", err);
+      console.warn("MP4 failed, falling back to still/GIF:", err);
     }
   }
-  if (item.gif) {
-    // Animated GIF: decode frames ourselves to avoid browser compositor
-    // quirks that leave <img>-based GIFs frozen on the first frame.
-    const canvas = await loadAnimatedGif(`catalog/${item.gif}`);
-    return { kind: "gif", el: canvas };
+  const src = item.gif || item.image;
+  if (src) {
+    const url = `catalog/${src}`;
+    if (/\.gif$/i.test(src)) {
+      const canvas = await loadAnimatedGif(url);
+      return { kind: "gif", el: canvas };
+    }
+    const img = await loadStaticImage(url);
+    return { kind: "gif", el: img };
   }
   throw new Error(`Catalog entry ${item.id} has no playable source`);
+}
+
+function loadStaticImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Image load failed: ${url}`));
+    img.src = url;
+  });
 }
 
 function loadVideo(src) {

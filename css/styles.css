@@ -331,16 +331,6 @@ input[type="number"] { width: 90px; }
   border-color: var(--accent);
 }
 
-.est-diag {
-  margin-top: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  max-height: 160px;
-  overflow: auto;
-}
-.est-diag:empty { display: none; }
 
 #catalog-filter {
   width: 100%;

@@ -435,58 +435,36 @@ canvas.addEventListener("pointerup", (e) => {
 function updateReadouts() {
   const c = stage.state.calibration;
   const el = document.getElementById("scale-readout");
-  const perspEl = document.getElementById("persp-refs-readout");
+  const diag = stage.getEstimatorDiagnostics();
+
   if (c.mode === "uniform" && c.pixelsPerFoot) {
-    el.textContent = `Calibrated: ${c.pixelsPerFoot.toFixed(1)} px / ft`;
+    el.textContent = `Calibrated · ${c.pixelsPerFoot.toFixed(1)} px / ft`;
     el.classList.add("calibrated");
   } else if (c.mode === "perspective" && c.refs.length) {
-    el.textContent = `Perspective: ${c.refs.length} reference${c.refs.length > 1 ? "s" : ""}`;
+    const n = c.refs.length;
+    const conf = diag?.confidence != null ? ` · ${Math.round(diag.confidence * 100)}% confidence` : "";
+    el.textContent = `Calibrated · ${n} reference${n > 1 ? "s" : ""}${conf}`;
     el.classList.add("calibrated");
   } else {
     el.textContent = "Not calibrated yet.";
     el.classList.remove("calibrated");
   }
-  if (perspEl) {
-    perspEl.textContent = c.mode === "perspective" && c.refs.length
-      ? `${c.refs.length} reference${c.refs.length > 1 ? "s" : ""} — sculptures scale with depth`
-      : "No references yet.";
-  }
 
-  // Render the per-reference list with individual remove buttons. Highlight
-  // any ref whose px/ft is far from the median — that's almost always a
-  // miscalibration (clicked points were farther apart than the real-world
-  // distance entered, or at a different depth than intended).
   const listEl = document.getElementById("persp-refs-list");
   if (listEl) {
     listEl.innerHTML = "";
     if (c.mode === "perspective") {
-      const vals = c.refs.map((r) => r.pixelsPerFoot).sort((a, b) => a - b);
-      const median = vals.length
-        ? (vals.length % 2 ? vals[(vals.length - 1) / 2] : (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2)
-        : 0;
-      const diag = stage.getEstimatorDiagnostics();
       const rejectedSet = new Set(diag?.rejectedIds || []);
       c.refs.forEach((r, i) => {
         const li = document.createElement("li");
         const span = document.createElement("span");
-        span.textContent = `ref #${r.id}: ${r.knownFeet.toFixed(2)} ft @ y=${Math.round(r.imageY)}  (${r.pixelsPerFoot.toFixed(1)} px/ft diag)`;
+        span.textContent = `ref #${r.id}: ${r.knownFeet.toFixed(2)} ft`;
         if (rejectedSet.has(r.id)) {
           li.classList.add("outlier");
           const warn = document.createElement("span");
           warn.className = "warn";
-          warn.textContent = " ⚠ rejected by model";
+          warn.textContent = " ⚠ outlier";
           span.appendChild(warn);
-        }
-        // Heuristic outlier flag for models that don't reject automatically.
-        if (!diag?.rejectedIds && c.refs.length >= 3 && median > 0) {
-          const ratio = r.pixelsPerFoot / median;
-          if (ratio > 3 || ratio < 1 / 3) {
-            li.classList.add("outlier");
-            const warn = document.createElement("span");
-            warn.className = "warn";
-            warn.textContent = " ⚠ likely miscalibrated";
-            span.appendChild(warn);
-          }
         }
         const rm = document.createElement("button");
         rm.type = "button";
@@ -503,27 +481,6 @@ function updateReadouts() {
       });
     }
   }
-
-  renderEstimatorDiagnostics();
-}
-
-function renderEstimatorDiagnostics() {
-  const el = document.getElementById("estimator-diag");
-  if (!el) return;
-  const d = stage.getEstimatorDiagnostics();
-  if (!d) { el.textContent = ""; return; }
-  const lines = [];
-  lines.push(`model: ${d.model}`);
-  if (d.horizonY != null) lines.push(`horizon y: ${d.horizonY.toFixed(1)}`);
-  if (d.sceneConstant != null) lines.push(`scene constant: ${d.sceneConstant.toFixed(2)}`);
-  if (d.confidence != null) lines.push(`confidence: ${(d.confidence * 100).toFixed(0)}%`);
-  if (d.fitError != null) lines.push(`fit error (MAD): ${d.fitError.toFixed(2)}`);
-  if (d.fitSpread != null) lines.push(`fit spread: ${d.fitSpread.toFixed(3)}`);
-  if (d.plausibleC) lines.push(`plausible C: ${d.plausibleC.low.toFixed(1)}–${d.plausibleC.high.toFixed(1)}`);
-  if (d.acceptedIds?.length) lines.push(`accepted refs: ${d.acceptedIds.join(", ")}`);
-  if (d.rejectedIds?.length) lines.push(`rejected refs: ${d.rejectedIds.join(", ")}`);
-  if (d.notes?.length) lines.push("", ...d.notes);
-  el.textContent = lines.join("\n");
 }
 
 // --- sculpture selection -------------------------------------------------

@@ -437,11 +437,8 @@
     "heightFeet": 11.417,
     "widthFeet": 3.75,
     "price": 5850,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "GOGFullwPole430x1200.gif",
+    "thumb": "thumbs/garden-of-ginger.png"
   },
   {
     "id": "gemini-x-large",
@@ -458,11 +455,8 @@
     "heightFeet": 5.417,
     "widthFeet": 2.167,
     "price": 1100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "GuardianAngelFullwPole594x2000.gif",
+    "thumb": "thumbs/guardian-angel.png"
   },
   {
     "id": "lotus-large",
@@ -470,11 +464,8 @@
     "heightFeet": 3.417,
     "widthFeet": 2.167,
     "price": 1800,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "LotusFullwPole660x2300.gif",
+    "thumb": "thumbs/lotus.png"
   },
   {
     "id": "lotus-x-large",
@@ -482,11 +473,8 @@
     "heightFeet": 5.417,
     "widthFeet": 3.167,
     "price": 2650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "LotusFullwPole660x2300.gif",
+    "thumb": "thumbs/lotus.png"
   },
   {
     "id": "meridian-large",
@@ -518,11 +506,8 @@
     "heightFeet": 6.333,
     "widthFeet": 3.083,
     "price": 900,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "MirindaIIwPole500x1400.gif",
+    "thumb": "thumbs/mirinda-ii.png"
   },
   {
     "id": "mirinda-iii",
@@ -530,11 +515,8 @@
     "heightFeet": 6.667,
     "widthFeet": 3.083,
     "price": 1050,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "MirindaIIIFullwPole500x1400.gif",
+    "thumb": "thumbs/mirinda-iii.png"
   },
   {
     "id": "mirinda-iv",
@@ -554,11 +536,8 @@
     "heightFeet": 5.5,
     "widthFeet": 1.833,
     "price": 1200,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "NautilusFullwPole415x1600.gif",
+    "thumb": "thumbs/nautilus.png"
   },
   {
     "id": "nebula-large",
@@ -566,11 +545,8 @@
     "heightFeet": 6.75,
     "widthFeet": 2.167,
     "price": 1750,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "NebualFullwPole425x1500.gif",
+    "thumb": "thumbs/nebula.png"
   },
   {
     "id": "nebula-x-large",
@@ -578,11 +554,8 @@
     "heightFeet": 9,
     "widthFeet": 3.5,
     "price": 2550,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "NebualFullwPole425x1500.gif",
+    "thumb": "thumbs/nebula.png"
   },
   {
     "id": "ponderosa-large",
@@ -590,11 +563,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2.75,
     "price": 2000,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "PonderosaFullWPole490x1400.gif",
+    "thumb": "thumbs/ponderosa.png"
   },
   {
     "id": "ponderosa-small",
@@ -602,11 +572,8 @@
     "heightFeet": 5,
     "widthFeet": 2,
     "price": 1100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "PonderosaFullWPole490x1400.gif",
+    "thumb": "thumbs/ponderosa.png"
   },
   {
     "id": "ponderosa-x-large",
@@ -614,11 +581,8 @@
     "heightFeet": 7.417,
     "widthFeet": 3.917,
     "price": 4350,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "PonderosaFullWPole490x1400.gif",
+    "thumb": "thumbs/ponderosa.png"
   },
   {
     "id": "red-ginger-small",
@@ -626,11 +590,8 @@
     "heightFeet": 5,
     "widthFeet": 1.417,
     "price": 1300,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "RedGingerFullwPole300x1600.gif",
+    "thumb": "thumbs/red-ginger.png"
   },
   {
     "id": "red-ginger-x-large",
@@ -638,11 +599,8 @@
     "heightFeet": 6.417,
     "widthFeet": 2.417,
     "price": 2850,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "RedGingerFullwPole300x1600.gif",
+    "thumb": "thumbs/red-ginger.png"
   },
   {
     "id": "sail-large",
@@ -650,11 +608,8 @@
     "heightFeet": 7.667,
     "widthFeet": 3.333,
     "price": 1650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SailFullwPole550x1200.gif",
+    "thumb": "thumbs/sail.png"
   },
   {
     "id": "sail-medium",
@@ -662,11 +617,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2.75,
     "price": 1200,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SailFullwPole550x1200.gif",
+    "thumb": "thumbs/sail.png"
   },
   {
     "id": "sail-small",
@@ -674,11 +626,8 @@
     "heightFeet": 5,
     "widthFeet": 2.25,
     "price": 800,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SailFullwPole550x1200.gif",
+    "thumb": "thumbs/sail.png"
   },
   {
     "id": "sail-x-large",
@@ -686,11 +635,8 @@
     "heightFeet": 10,
     "widthFeet": 4.083,
     "price": 2750,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SailFullwPole550x1200.gif",
+    "thumb": "thumbs/sail.png"
   },
   {
     "id": "schooner-large",
@@ -698,11 +644,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2,
     "price": 1250,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SchoonerFullwPole400x1500.gif",
+    "thumb": "thumbs/schooner.png"
   },
   {
     "id": "shamrock-large",
@@ -710,11 +653,8 @@
     "heightFeet": 7.5,
     "widthFeet": 2.5,
     "price": 2600,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "ShamrockFullwPole480x1250.gif",
+    "thumb": "thumbs/shamrock.png"
   },
   {
     "id": "single-helix-oval-large",
@@ -722,11 +662,8 @@
     "heightFeet": 7.667,
     "widthFeet": 2.333,
     "price": 2250,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHOFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-oval.png"
   },
   {
     "id": "single-helix-oval-medium",
@@ -734,11 +671,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2,
     "price": 1450,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHOFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-oval.png"
   },
   {
     "id": "single-helix-oval-small",
@@ -746,11 +680,8 @@
     "heightFeet": 5,
     "widthFeet": 1.333,
     "price": 1000,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHOFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-oval.png"
   },
   {
     "id": "single-helix-oval-sub-huge",
@@ -758,11 +689,8 @@
     "heightFeet": 13.417,
     "widthFeet": 4.417,
     "price": 5050,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHOFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-oval.png"
   },
   {
     "id": "single-helix-oval-x-large",
@@ -770,11 +698,8 @@
     "heightFeet": 10,
     "widthFeet": 3,
     "price": 3350,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHOFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-oval.png"
   },
   {
     "id": "single-helix-star-medium",
@@ -782,11 +707,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2,
     "price": 1450,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHSFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-star.png"
   },
   {
     "id": "single-helix-star-small",
@@ -794,11 +716,8 @@
     "heightFeet": 5,
     "widthFeet": 1.333,
     "price": 1000,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHSFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-star.png"
   },
   {
     "id": "single-helix-star-sub-huge",
@@ -806,11 +725,8 @@
     "heightFeet": 13.417,
     "widthFeet": 4.417,
     "price": 5050,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHSFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-star.png"
   },
   {
     "id": "single-helix-star-x-large",
@@ -818,11 +734,8 @@
     "heightFeet": 10,
     "widthFeet": 3,
     "price": 3350,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SHSFullwPole400x1500.gif",
+    "thumb": "thumbs/single-helix-star.png"
   },
   {
     "id": "spring-large",
@@ -830,11 +743,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2,
     "price": 1500,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SpringFullwPole406x1500.gif",
+    "thumb": "thumbs/spring.png"
   },
   {
     "id": "star-dancer-horizontal-huge",
@@ -842,11 +752,8 @@
     "heightFeet": 16.833,
     "widthFeet": 5.667,
     "price": 6900,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-horizontal-large",
@@ -854,11 +761,8 @@
     "heightFeet": 7.667,
     "widthFeet": 2.167,
     "price": 1650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-horizontal-medium",
@@ -866,11 +770,8 @@
     "heightFeet": 6.583,
     "widthFeet": 2.167,
     "price": 1200,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-horizontal-small",
@@ -878,11 +779,8 @@
     "heightFeet": 5,
     "widthFeet": 1.833,
     "price": 800,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-horizontal-sub-huge",
@@ -890,11 +788,8 @@
     "heightFeet": 13.417,
     "widthFeet": 4.167,
     "price": 4600,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-horizontal-x-huge",
@@ -902,11 +797,8 @@
     "heightFeet": 21.333,
     "widthFeet": 6.583,
     "price": 13900,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-horizontal-x-large",
@@ -914,11 +806,8 @@
     "heightFeet": 10,
     "widthFeet": 3.25,
     "price": 2650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDHFullwPole360x1200.gif",
+    "thumb": "thumbs/star-dancer-horizontal.png"
   },
   {
     "id": "star-dancer-vertical-huge",
@@ -926,11 +815,8 @@
     "heightFeet": 16.833,
     "widthFeet": 5.667,
     "price": 6900,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "star-dancer-vertical-large",
@@ -938,11 +824,8 @@
     "heightFeet": 7.667,
     "widthFeet": 2.25,
     "price": 1650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "star-dancer-vertical-medium",
@@ -950,11 +833,8 @@
     "heightFeet": 6.583,
     "widthFeet": 1.917,
     "price": 1200,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "star-dancer-vertical-small",
@@ -962,11 +842,8 @@
     "heightFeet": 5,
     "widthFeet": 1.667,
     "price": 800,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "star-dancer-vertical-sub-huge",
@@ -974,11 +851,8 @@
     "heightFeet": 13.417,
     "widthFeet": 3.833,
     "price": 4600,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "star-dancer-vertical-x-huge",
@@ -986,11 +860,8 @@
     "heightFeet": 21.333,
     "widthFeet": 5.833,
     "price": 13900,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "star-dancer-vertical-x-large",
@@ -998,11 +869,8 @@
     "heightFeet": 10,
     "widthFeet": 2.917,
     "price": 2650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "SDVFullwPole365x1200.gif",
+    "thumb": "thumbs/star-dancer-vertical.png"
   },
   {
     "id": "stream-large",
@@ -1010,11 +878,8 @@
     "heightFeet": 6.667,
     "widthFeet": 2.5,
     "price": 900,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "StreamFullwPole550x1500.gif",
+    "thumb": "thumbs/stream.png"
   },
   {
     "id": "stream-x-large",
@@ -1022,11 +887,8 @@
     "heightFeet": 8.167,
     "widthFeet": 4,
     "price": 1750,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "StreamFullwPole550x1500.gif",
+    "thumb": "thumbs/stream.png"
   },
   {
     "id": "tulip-large",
@@ -1034,11 +896,8 @@
     "heightFeet": 5.167,
     "widthFeet": 1.333,
     "price": 1350,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TulipFullwPole350x2000.gif",
+    "thumb": "thumbs/tulip.png"
   },
   {
     "id": "twister-oval-gyro-max",
@@ -1046,11 +905,8 @@
     "heightFeet": 28.083,
     "widthFeet": 7.583,
     "price": 39550,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-oval-huge",
@@ -1058,11 +914,8 @@
     "heightFeet": 18.083,
     "widthFeet": 5.417,
     "price": 7700,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-oval-large",
@@ -1070,11 +923,8 @@
     "heightFeet": 7.667,
     "widthFeet": 2,
     "price": 2100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-oval-small",
@@ -1082,11 +932,8 @@
     "heightFeet": 5,
     "widthFeet": 1.417,
     "price": 1100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-oval-sub-huge",
@@ -1094,11 +941,8 @@
     "heightFeet": 14.75,
     "widthFeet": 4.167,
     "price": 5500,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-oval-x-huge",
@@ -1106,11 +950,8 @@
     "heightFeet": 23.083,
     "widthFeet": 6.167,
     "price": 21400,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-oval-x-large",
@@ -1118,11 +959,8 @@
     "heightFeet": 11.25,
     "widthFeet": 2.583,
     "price": 3750,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterOvalFullWPole325x1200.gif",
+    "thumb": "thumbs/twister-oval.png"
   },
   {
     "id": "twister-star-huge",
@@ -1130,11 +968,8 @@
     "heightFeet": 18.083,
     "widthFeet": 5.417,
     "price": 7700,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterStarFullwPole330x1200.gif",
+    "thumb": "thumbs/twister-star.png"
   },
   {
     "id": "twister-star-large",
@@ -1142,11 +977,8 @@
     "heightFeet": 7.667,
     "widthFeet": 2,
     "price": 2100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterStarFullwPole330x1200.gif",
+    "thumb": "thumbs/twister-star.png"
   },
   {
     "id": "twister-star-small",
@@ -1154,11 +986,8 @@
     "heightFeet": 5,
     "widthFeet": 1.417,
     "price": 1100,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterStarFullwPole330x1200.gif",
+    "thumb": "thumbs/twister-star.png"
   },
   {
     "id": "twister-star-sub-huge",
@@ -1166,11 +995,8 @@
     "heightFeet": 14.75,
     "widthFeet": 4.167,
     "price": 5500,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterStarFullwPole330x1200.gif",
+    "thumb": "thumbs/twister-star.png"
   },
   {
     "id": "twister-star-x-huge",
@@ -1178,11 +1004,8 @@
     "heightFeet": 23.083,
     "widthFeet": 6.167,
     "price": 21400,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterStarFullwPole330x1200.gif",
+    "thumb": "thumbs/twister-star.png"
   },
   {
     "id": "twister-star-x-large",
@@ -1190,11 +1013,8 @@
     "heightFeet": 11.25,
     "widthFeet": 2.583,
     "price": 3750,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "TwisterStarFullwPole330x1200.gif",
+    "thumb": "thumbs/twister-star.png"
   },
   {
     "id": "wave-large",
@@ -1202,11 +1022,8 @@
     "heightFeet": 8.5,
     "widthFeet": 1.25,
     "price": 1450,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "WavePair01FullwPole351x1200.gif",
+    "thumb": "thumbs/wave.png"
   },
   {
     "id": "wave-x-large",
@@ -1214,11 +1031,8 @@
     "heightFeet": 11.417,
     "widthFeet": 2,
     "price": 2750,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "WavePair01FullwPole351x1200.gif",
+    "thumb": "thumbs/wave.png"
   },
   {
     "id": "wind-dancer-large",
@@ -1226,11 +1040,8 @@
     "heightFeet": 7.667,
     "widthFeet": 2.083,
     "price": 1650,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "WindDancerFullwPole350x1600.gif",
+    "thumb": "thumbs/wind-dancer.png"
   },
   {
     "id": "wind-dancer-small",
@@ -1238,11 +1049,8 @@
     "heightFeet": 5,
     "widthFeet": 1.583,
     "price": 800,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "WindDancerFullwPole350x1600.gif",
+    "thumb": "thumbs/wind-dancer.png"
   },
   {
     "id": "windflower-large",
@@ -1250,10 +1058,7 @@
     "heightFeet": 5.5,
     "widthFeet": 2.5,
     "price": 1200,
-    "mp4": "sample-sculpture-8ft.mp4",
-    "gif": "sample-sculpture-8ft.gif",
-    "mp4HasAlpha": false,
-    "chromaKey": "#ff00ff",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "gif": "WindFlowerFullWPole576x1800.gif",
+    "thumb": "thumbs/windflower.png"
   }
 ]

@@ -98,6 +98,7 @@
               <button id="btn-persp-add" type="button">Add reference</button>
               <button id="btn-persp-clear" type="button" class="ghost">Clear all</button>
             </div>
+            <ul id="persp-refs-list" class="ref-list"></ul>
             <p class="readout" id="persp-refs-readout">No references yet.</p>
           </div>
 
@@ -123,9 +124,10 @@
           </div>
           <div class="row toolbar">
             <button id="btn-undo" type="button" title="Ctrl+Z / Cmd+Z">↶ Undo <span id="undo-count" class="badge"></span></button>
+            <button id="btn-reset-scale" type="button" class="ghost">Reset size</button>
             <button id="btn-delete-selected" type="button" class="ghost">Delete selected</button>
           </div>
-          <p class="hint">Click a tile to add at default position, or <b>drag a tile onto the photo</b> to place it exactly where you drop it. Drag a placed sculpture to reposition. <b>Right-click</b> a sculpture to remove it. Click the photo background to deselect.</p>
+          <p class="hint">Click a tile to add at default position, or <b>drag a tile onto the photo</b> to place it exactly where you drop it. Drag a placed sculpture to reposition. Drag the <b>blue handle at the top</b> to resize. <b>Reset size</b> snaps back to the perspective-calculated size. <b>Right-click</b> a sculpture to remove it.</p>
         </fieldset>
 
         <!-- Step 4: Export -->

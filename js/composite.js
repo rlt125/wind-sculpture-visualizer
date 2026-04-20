@@ -126,6 +126,12 @@ export function createStage(canvas) {
     state.calibration = { mode: "uniform", pixelsPerFoot: null, refs: [] };
   }
 
+  function removePerspectiveRef(idx) {
+    if (state.calibration.mode !== "perspective") return;
+    state.calibration.refs.splice(idx, 1);
+    if (state.calibration.refs.length === 0) clearCalibration();
+  }
+
   // --- sculptures ---------------------------------------------------------
 
   function defaultPosition() {
@@ -146,10 +152,24 @@ export function createStage(canvas) {
       position: defaultPosition(),
       flip: false,
       shadow: true,
+      scale: 1.0, // 1.0 = auto-scaled by calibration; user-resize overrides
     };
     state.sculptures.push(s);
     state.selectedId = s.id;
     return s;
+  }
+
+  function setSelectedScale(scale) {
+    const s = getSelected();
+    if (s) s.scale = Math.max(0.1, scale);
+  }
+
+  function resetSelectedScale() {
+    const s = getSelected();
+    if (!s) return null;
+    const prev = s.scale;
+    s.scale = 1.0;
+    return prev;
   }
 
   // Re-insert a previously-removed sculpture. Used by undo.
@@ -205,12 +225,26 @@ export function createStage(canvas) {
     if (!ppf || !f) return null;
     const { w: srcW, h: srcH } = sourceSize(s.source);
     if (!srcW || !srcH) return null;
-    const imgHeightPx = s.meta.heightFeet * ppf;
+    const scale = s.scale || 1;
+    const imgHeightPx = s.meta.heightFeet * ppf * scale;
     const imgWidthPx = imgHeightPx * (srcW / srcH);
     const drawH = imgHeightPx * f.scale;
     const drawW = imgWidthPx * f.scale;
     const pos = imageToCanvas(s.position.imageX, s.position.imageY);
     return { x: pos.x - drawW / 2, y: pos.y - drawH, w: drawW, h: drawH, anchor: pos, srcW, srcH };
+  }
+
+  // Hit-test: is a canvas-space point on the resize handle of the selected
+  // sculpture? Handle is a small disc at the top-center of the draw box.
+  const RESIZE_HANDLE_R = 9;
+  function isOnResizeHandle(cx, cy) {
+    const s = getSelected();
+    if (!s) return false;
+    const b = sculptureDrawBox(s);
+    if (!b) return false;
+    const hx = b.x + b.w / 2;
+    const hy = b.y;
+    return Math.hypot(cx - hx, cy - hy) <= RESIZE_HANDLE_R + 2;
   }
 
   function drawSculptures() {
@@ -248,6 +282,33 @@ export function createStage(canvas) {
         ctx.setLineDash([6, 4]);
         ctx.strokeRect(b.x, b.y, b.w, b.h);
         ctx.restore();
+
+        // Resize handle: top-center disc with a subtle outline.
+        ctx.save();
+        ctx.fillStyle = "#4f8cff";
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(b.x + b.w / 2, b.y, RESIZE_HANDLE_R, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Percent-of-perspective badge if user has overridden the auto-scale.
+        if (s.scale && Math.abs(s.scale - 1) > 0.01) {
+          ctx.save();
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          ctx.strokeStyle = "rgba(255,255,255,0.9)";
+          ctx.font = "bold 12px system-ui";
+          const label = `${Math.round(s.scale * 100)}%`;
+          const tx = b.x + b.w + 8;
+          const ty = b.y + 12;
+          const m = ctx.measureText(label);
+          ctx.fillRect(tx - 3, ty - 12, m.width + 6, 16);
+          ctx.fillStyle = "#fff";
+          ctx.fillText(label, tx, ty);
+          ctx.restore();
+        }
       }
     }
   }
@@ -395,14 +456,15 @@ export function createStage(canvas) {
     // photo
     setPhoto,
     // calibration
-    setUniformCalibration, addPerspectiveRef, clearCalibration,
+    setUniformCalibration, addPerspectiveRef, clearCalibration, removePerspectiveRef,
     hasCalibration, pixelsPerFootAt,
     // sculptures
     addSculpture, removeSculpture, restoreSculpture, selectSculpture,
-    getSelected, setFlip, setShadow,
+    getSelected, setFlip, setShadow, setSelectedScale, resetSelectedScale,
+    sculptureDrawBox,
     // coords / hit-test
     eventToCanvas, canvasToImage, imageToCanvas,
-    sculptureAtPoint, moveSelectedBy,
+    sculptureAtPoint, isOnResizeHandle, moveSelectedBy,
     // overlay
     setCalibOverlay(o) { state.calibOverlay = o; },
     clearCalibOverlay() { state.calibOverlay = null; },

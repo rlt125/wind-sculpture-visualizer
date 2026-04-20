@@ -19,10 +19,9 @@ const stage = createStage(canvas);
 let catalogItems = [];
 let selectedCatalogItem = null;
 let calibMode = "two-point"; // "two-point" | "preset" | "perspective"
-let interactionMode = "idle"; // "idle" | "calibrate-two-point" | "calibrate-preset" | "calibrate-persp" | "drag" | "resize"
+let interactionMode = "idle"; // "idle" | "calibrate-two-point" | "calibrate-preset" | "calibrate-persp" | "drag"
 let dragAnchor = null;
 let dragBeforeImageXY = null; // to build an undo entry when a drag ends
-let resizeCtx = null;         // { id, anchorY, baseDrawH, startScale } during resize
 
 // Undo history: { kind: "add"|"move"|"delete", ... }
 const undoStack = [];
@@ -271,27 +270,6 @@ canvas.addEventListener("pointerdown", (e) => {
     return;
   }
 
-  // Resize-handle takes priority over the body hit: the handle sits just
-  // outside the top edge, so a click there should resize the already-selected
-  // sculpture (not start a drag on anything behind it).
-  if (stage.isOnResizeHandle(x, y)) {
-    const sel = stage.getSelected();
-    if (sel) {
-      const box = stage.sculptureDrawBox(sel);
-      const startScale = sel.scale || 1;
-      resizeCtx = {
-        id: sel.id,
-        anchorY: box.anchor.y,
-        baseDrawH: box.h / startScale,
-        startScale,
-      };
-      interactionMode = "resize";
-      canvas.setPointerCapture(e.pointerId);
-      canvas.classList.add("cursor-ns-resize");
-      return;
-    }
-  }
-
   // Pick / drag logic: click on a sculpture selects + starts drag; click on
   // empty area deselects.
   const hitId = stage.sculptureAtPoint(x, y);
@@ -311,16 +289,10 @@ canvas.addEventListener("pointerdown", (e) => {
 });
 
 canvas.addEventListener("pointermove", (e) => {
-  if (interactionMode === "drag" && dragAnchor) {
-    const { x, y } = stage.eventToCanvas(e);
-    stage.moveSelectedBy(x - dragAnchor.x, y - dragAnchor.y);
-    dragAnchor = { x, y };
-  } else if (interactionMode === "resize" && resizeCtx) {
-    const { y } = stage.eventToCanvas(e);
-    const newHeight = Math.max(10, resizeCtx.anchorY - y);
-    const newScale = newHeight / resizeCtx.baseDrawH;
-    stage.setSelectedScale(newScale);
-  }
+  if (interactionMode !== "drag" || !dragAnchor) return;
+  const { x, y } = stage.eventToCanvas(e);
+  stage.moveSelectedBy(x - dragAnchor.x, y - dragAnchor.y);
+  dragAnchor = { x, y };
 });
 
 // Right-click on a sculpture shows a small context menu (Delete, Reset size).
@@ -363,13 +335,6 @@ function showContextMenu(clientX, clientY, sculptureId) {
     if (removed) pushUndo({ kind: "delete", sculpture: removed.sculpture, index: removed.index });
     syncToggles();
   });
-  add("Reset size", "", () => {
-    const s = stage.state.sculptures.find((x) => x.id === sculptureId);
-    if (!s || Math.abs((s.scale || 1) - 1) < 0.005) return;
-    const prev = s.scale;
-    s.scale = 1;
-    pushUndo({ kind: "scale", id: sculptureId, from: prev, to: 1 });
-  });
   add("Bring to front", "", () => {
     const idx = stage.state.sculptures.findIndex((x) => x.id === sculptureId);
     if (idx < 0) return;
@@ -406,15 +371,6 @@ canvas.addEventListener("pointerup", (e) => {
       }
     }
     dragBeforeImageXY = null;
-  } else if (interactionMode === "resize" && resizeCtx) {
-    canvas.releasePointerCapture(e.pointerId);
-    canvas.classList.remove("cursor-ns-resize");
-    interactionMode = "idle";
-    const sel = stage.getSelected();
-    if (sel && Math.abs(sel.scale - resizeCtx.startScale) > 0.005) {
-      pushUndo({ kind: "scale", id: sel.id, from: resizeCtx.startScale, to: sel.scale });
-    }
-    resizeCtx = null;
   }
 });
 
@@ -526,14 +482,6 @@ btnDelete.addEventListener("click", () => {
   const removed = stage.removeSculpture(sel.id);
   if (removed) pushUndo({ kind: "delete", sculpture: removed.sculpture, index: removed.index });
   syncToggles();
-});
-
-const btnResetScale = document.getElementById("btn-reset-scale");
-btnResetScale.addEventListener("click", () => {
-  const sel = stage.getSelected();
-  if (!sel || Math.abs((sel.scale || 1) - 1) < 0.005) return;
-  const prev = stage.resetSelectedScale();
-  if (prev != null) pushUndo({ kind: "scale", id: sel.id, from: prev, to: 1 });
 });
 
 function undoLast() {

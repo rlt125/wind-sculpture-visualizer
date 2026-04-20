@@ -405,6 +405,15 @@
     "thumb": "thumbs/elements-fire.png"
   },
   {
+    "id": "elements-grouping",
+    "name": "Elements — Grouping (all 4)",
+    "heightFeet": 6.25,
+    "widthFeet": 4.808,
+    "price": 2575,
+    "gif": "ElementGroupingFullwPole1000x1300.gif",
+    "thumb": "thumbs/elements-grouping.png"
+  },
+  {
     "id": "elements-water",
     "name": "Elements — Water",
     "heightFeet": 4.833,

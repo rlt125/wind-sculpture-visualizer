@@ -1,7 +1,10 @@
 // Catalog loader.
 //
 // Reads catalog/manifest.json, renders the thumbnail grid, and resolves an
-// entry to a media source (<video> for MP4, <img> for GIF) on demand.
+// entry to a media source (<video> for MP4, decoded GIF canvas, or <img>
+// for static PNG/JPG) on demand.
+
+import { loadAnimatedGif } from "./gif-player.js";
 
 function formatFeetInches(decimalFeet) {
   const ft = Math.floor(decimalFeet);
@@ -83,8 +86,10 @@ export async function loadSource(item, preference) {
     }
   }
   if (item.gif) {
-    const img = await loadImage(`catalog/${item.gif}`);
-    return { kind: "gif", el: img };
+    // Animated GIF: decode frames ourselves to avoid browser compositor
+    // quirks that leave <img>-based GIFs frozen on the first frame.
+    const canvas = await loadAnimatedGif(`catalog/${item.gif}`);
+    return { kind: "gif", el: canvas };
   }
   throw new Error(`Catalog entry ${item.id} has no playable source`);
 }
@@ -105,32 +110,3 @@ function loadVideo(src) {
   });
 }
 
-// Shared off-screen host: browsers only advance animated-GIF frames when the
-// <img> is actually in the DOM, so we park each loaded image here. Hidden via
-// off-screen positioning (display:none / visibility:hidden also stop
-// animation in some engines).
-let gifHost = null;
-function getGifHost() {
-  if (!gifHost) {
-    gifHost = document.createElement("div");
-    gifHost.setAttribute("aria-hidden", "true");
-    gifHost.style.cssText =
-      "position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden;pointer-events:none";
-    document.body.appendChild(gifHost);
-  }
-  return gifHost;
-}
-
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Image load failed: ${src}`));
-    img.src = src;
-    // Parent into DOM so animated GIFs actually animate. Replace any previous
-    // loaded image so we don't accumulate huge GIFs across selections.
-    const host = getGifHost();
-    host.replaceChildren(img);
-  });
-}

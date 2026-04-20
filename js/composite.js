@@ -254,7 +254,7 @@ export function createStage(canvas) {
     if (!s) return false;
     const b = sculptureDrawBox(s);
     if (!b) return false;
-    const hx = b.x + b.w, hy = b.y;
+    const hx = b.visX + b.visW, hy = b.visY;
     return (
       cx >= hx - RESIZE_HANDLE_R - 2 && cx <= hx + RESIZE_HANDLE_R + 2 &&
       cy >= hy - RESIZE_HANDLE_R - 2 && cy <= hy + RESIZE_HANDLE_R + 2
@@ -267,13 +267,39 @@ export function createStage(canvas) {
     if (!ppf || !f) return null;
     const { w: srcW, h: srcH } = sourceSize(s.source);
     if (!srcW || !srcH) return null;
+
+    // Use the tight visible bounds of the source (computed at load time)
+    // so heightFeet maps to the *visible* sculpture, not the whole canvas.
+    const vis = s.source.el.visibleBounds;
+    const visMinX = vis ? vis.minX : 0;
+    const visMinY = vis ? vis.minY : 0;
+    const visMaxX = vis ? vis.maxX : srcW - 1;
+    const visMaxY = vis ? vis.maxY : srcH - 1;
+    const visH = visMaxY - visMinY + 1;
+    const visCenterXFrac = (visMinX + visMaxX + 1) / (2 * srcW);
+    const visBottomYFrac = (visMaxY + 1) / srcH;
+
     const scale = s.scale || 1;
-    const imgHeightPx = s.meta.heightFeet * ppf * scale;
-    const imgWidthPx = imgHeightPx * (srcW / srcH);
-    const drawH = imgHeightPx * f.scale;
-    const drawW = imgWidthPx * f.scale;
-    const pos = imageToCanvas(s.position.imageX, s.position.imageY);
-    return { x: pos.x - drawW / 2, y: pos.y - drawH, w: drawW, h: drawH, anchor: pos, srcW, srcH };
+    // Scale the full source so the visible sculpture is heightFeet tall.
+    const imgScale = (s.meta.heightFeet * ppf * scale) / visH;
+    const drawH = srcH * imgScale * f.scale;
+    const drawW = srcW * imgScale * f.scale;
+
+    const anchor = imageToCanvas(s.position.imageX, s.position.imageY);
+    // Position the full source so the visible bottom lands on the anchor.
+    const drawY = anchor.y - visBottomYFrac * drawH;
+    const drawX = anchor.x - visCenterXFrac * drawW;
+
+    // Visible sub-rect in canvas coords (selection outline + hit-test + shadow)
+    const visX = drawX + (visMinX / srcW) * drawW;
+    const visY = drawY + (visMinY / srcH) * drawH;
+    const visW = ((visMaxX - visMinX + 1) / srcW) * drawW;
+    const visHC = (visH / srcH) * drawH;
+
+    return {
+      x: drawX, y: drawY, w: drawW, h: drawH, anchor, srcW, srcH,
+      visX, visY, visW, visH: visHC,
+    };
   }
 
 
@@ -288,7 +314,7 @@ export function createStage(canvas) {
         ctx.globalAlpha = 0.35;
         ctx.fillStyle = "#000";
         ctx.beginPath();
-        ctx.ellipse(b.anchor.x, b.anchor.y, b.w * 0.45, b.h * 0.04, 0, 0, Math.PI * 2);
+        ctx.ellipse(b.anchor.x, b.anchor.y, b.visW * 0.45, b.visH * 0.04, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
@@ -310,11 +336,11 @@ export function createStage(canvas) {
         ctx.strokeStyle = "#4f8cff";
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
-        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.strokeRect(b.visX, b.visY, b.visW, b.visH);
         ctx.restore();
 
-        // Corner resize handle at the top-right.
-        const hx = b.x + b.w, hy = b.y;
+        // Corner resize handle at the top-right of the visible sculpture.
+        const hx = b.visX + b.visW, hy = b.visY;
         ctx.save();
         ctx.fillStyle = "#4f8cff";
         ctx.strokeStyle = "#fff";
@@ -476,7 +502,7 @@ export function createStage(canvas) {
     for (let i = state.sculptures.length - 1; i >= 0; i--) {
       const b = sculptureDrawBox(state.sculptures[i]);
       if (!b) continue;
-      if (cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h) {
+      if (cx >= b.visX && cx <= b.visX + b.visW && cy >= b.visY && cy <= b.visY + b.visH) {
         return state.sculptures[i].id;
       }
     }

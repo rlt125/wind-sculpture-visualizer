@@ -4,7 +4,7 @@
 // entry to a media source (<video> for MP4, decoded GIF canvas, or <img>
 // for static PNG/JPG) on demand.
 
-import { loadAnimatedGif } from "./gif-player.js";
+import { loadAnimatedGif, computeVisibleBounds } from "./gif-player.js";
 
 function formatFeetInches(decimalFeet) {
   const ft = Math.floor(decimalFeet);
@@ -110,13 +110,24 @@ export async function loadSource(item, preference) {
   throw new Error(`Catalog entry ${item.id} has no playable source`);
 }
 
-function loadStaticImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Image load failed: ${url}`));
-    img.src = url;
+async function loadStaticImage(url) {
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error(`Image load failed: ${url}`));
+    im.src = url;
   });
+  // Render into a canvas so we can inspect pixels (same shape the renderer
+  // gets back from the GIF path). Canvases support naturalWidth/Height too.
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, 0);
+  c.naturalWidth = c.width;
+  c.naturalHeight = c.height;
+  c.visibleBounds = computeVisibleBounds(g, c.width, c.height);
+  return c;
 }
 
 function loadVideo(src) {

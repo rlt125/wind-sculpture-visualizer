@@ -102,5 +102,28 @@ export async function loadAnimatedGif(url) {
   // treat this canvas interchangeably with an HTMLImageElement.
   canvas.naturalWidth = W;
   canvas.naturalHeight = H;
+  // Compute the bounding box of non-transparent pixels in the first frame
+  // so the renderer can size/anchor to the visible sculpture, not the
+  // (possibly-padded) GIF canvas. Done once per load.
+  canvas.visibleBounds = computeVisibleBounds(ctx, W, H);
   return canvas;
+}
+
+// Scan the canvas for the tight non-transparent bounding box. Returns null
+// if the canvas is entirely transparent.
+export function computeVisibleBounds(ctx, w, h) {
+  const data = ctx.getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (data[(y * w + x) * 4 + 3] > 32) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return null;
+  return { minX, minY, maxX, maxY };
 }

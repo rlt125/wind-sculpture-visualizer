@@ -280,7 +280,9 @@ canvas.addEventListener("pointerdown", (e) => {
       resizeCtx = {
         id: sel.id,
         anchorY: box.anchor.y,
-        baseDrawH: box.h / startScale,
+        // Base the resize math on the *visible* height so dragging the
+        // handle to a point maps to the new visible height directly.
+        baseDrawH: box.visH / startScale,
         startScale,
       };
       interactionMode = "resize";

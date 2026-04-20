@@ -70,13 +70,13 @@ export function createStage(canvas) {
 
   // --- calibration --------------------------------------------------------
 
-  // Depth-aware px-per-foot for a given image-Y. In uniform mode this is
-  // constant; in perspective mode we linearly interpolate between adjacent
-  // references, then clamp to the endpoints outside the calibrated range.
-  // No extrapolation: if the refs are close together, naive extrapolation
-  // compounds aggressively and makes sculptures placed below the nearest
-  // ref (i.e. closer to the viewer) explode in size. Clamping prevents that
-  // — the cost is that sculptures "past" the near ref stop growing.
+  // Depth-aware px-per-foot for a given image-Y. Uniform mode returns a
+  // constant. Perspective mode uses inverse-distance-weighted averaging
+  // across ALL references — closer refs dominate, but every ref contributes.
+  // This gives a smooth curve that passes exactly through each ref (up to
+  // floating point) and blends smoothly between them. Outside the range of
+  // refs, we clamp to the nearest endpoint so sculptures placed past the
+  // near ref don't explode in size.
   function pixelsPerFootAt(imageY) {
     const c = state.calibration;
     if (c.mode === "uniform") return c.pixelsPerFoot;
@@ -87,14 +87,16 @@ export function createStage(canvas) {
     if (imageY <= sorted[0].imageY) return sorted[0].pixelsPerFoot;
     const last = sorted[sorted.length - 1];
     if (imageY >= last.imageY) return last.pixelsPerFoot;
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const lo = sorted[i], hi = sorted[i + 1];
-      if (imageY >= lo.imageY && imageY <= hi.imageY) {
-        const t = (imageY - lo.imageY) / (hi.imageY - lo.imageY);
-        return lo.pixelsPerFoot + t * (hi.pixelsPerFoot - lo.pixelsPerFoot);
-      }
+    // Inverse-distance-squared weighting (Shepard's method, p=2).
+    let wSum = 0, vSum = 0;
+    for (const r of refs) {
+      const d = Math.abs(imageY - r.imageY);
+      if (d < 0.5) return r.pixelsPerFoot; // effectively at this ref
+      const w = 1 / (d * d);
+      wSum += w;
+      vSum += w * r.pixelsPerFoot;
     }
-    return sorted[0].pixelsPerFoot; // unreachable
+    return vSum / wSum;
   }
 
   function hasCalibration() {
@@ -224,6 +226,22 @@ export function createStage(canvas) {
     return { w: src.el.naturalWidth || 1, h: src.el.naturalHeight || 1 };
   }
 
+  const RESIZE_HANDLE_R = 8;
+
+  // Hit-test: is a canvas point on the corner resize handle of the selected
+  // sculpture? Handle is a square at the top-right corner of the draw box.
+  function isOnResizeHandle(cx, cy) {
+    const s = getSelected();
+    if (!s) return false;
+    const b = sculptureDrawBox(s);
+    if (!b) return false;
+    const hx = b.x + b.w, hy = b.y;
+    return (
+      cx >= hx - RESIZE_HANDLE_R - 2 && cx <= hx + RESIZE_HANDLE_R + 2 &&
+      cy >= hy - RESIZE_HANDLE_R - 2 && cy <= hy + RESIZE_HANDLE_R + 2
+    );
+  }
+
   function sculptureDrawBox(s) {
     const ppf = pixelsPerFootAt(s.position.imageY);
     const f = state.photoFit;
@@ -275,6 +293,36 @@ export function createStage(canvas) {
         ctx.setLineDash([6, 4]);
         ctx.strokeRect(b.x, b.y, b.w, b.h);
         ctx.restore();
+
+        // Corner resize handle at the top-right.
+        const hx = b.x + b.w, hy = b.y;
+        ctx.save();
+        ctx.fillStyle = "#4f8cff";
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.fillRect(hx - RESIZE_HANDLE_R, hy - RESIZE_HANDLE_R, RESIZE_HANDLE_R * 2, RESIZE_HANDLE_R * 2);
+        ctx.strokeRect(hx - RESIZE_HANDLE_R, hy - RESIZE_HANDLE_R, RESIZE_HANDLE_R * 2, RESIZE_HANDLE_R * 2);
+        ctx.restore();
+
+        // Scale tooltip near the handle. Shown whenever scale differs from
+        // 1.0 — covers both "during drag" and "stuck at a manual override".
+        const scale = s.scale || 1;
+        if (Math.abs(scale - 1) > 0.005) {
+          const pct = Math.round(scale * 100);
+          const delta = Math.round((scale - 1) * 100);
+          const label = delta >= 0 ? `${pct}%  (+${delta}%)` : `${pct}%  (${delta}%)`;
+          ctx.save();
+          ctx.font = "bold 12px system-ui";
+          const m = ctx.measureText(label);
+          const padX = 6, padY = 4;
+          const tx = hx + 10;
+          const ty = hy - 4;
+          ctx.fillStyle = "rgba(0,0,0,0.8)";
+          ctx.fillRect(tx - padX, ty - 12 - padY, m.width + padX * 2, 16 + padY);
+          ctx.fillStyle = scale > 1 ? "#ffd96a" : "#6aa1ff";
+          ctx.fillText(label, tx, ty);
+          ctx.restore();
+        }
       }
     }
   }
@@ -430,7 +478,7 @@ export function createStage(canvas) {
     sculptureDrawBox,
     // coords / hit-test
     eventToCanvas, canvasToImage, imageToCanvas,
-    sculptureAtPoint, moveSelectedBy,
+    sculptureAtPoint, isOnResizeHandle, moveSelectedBy,
     // overlay
     setCalibOverlay(o) { state.calibOverlay = o; },
     clearCalibOverlay() { state.calibOverlay = null; },

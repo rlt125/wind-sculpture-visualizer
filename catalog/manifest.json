@@ -6,7 +6,7 @@
     "widthFeet": 2.083,
     "price": 2200,
     "gif": "AgaveFullSculpture_.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/agave.png"
   },
   {
     "id": "agave-x-large",
@@ -15,7 +15,7 @@
     "widthFeet": 3.333,
     "price": 2950,
     "gif": "AgaveFullSculpture_.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/agave.png"
   },
   {
     "id": "bean-pole-large",
@@ -24,7 +24,7 @@
     "widthFeet": 1.333,
     "price": 2000,
     "gif": "BeanPoleFullSculpture.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/bean-pole.png"
   },
   {
     "id": "bean-pole-x-large",
@@ -33,7 +33,7 @@
     "widthFeet": 1.917,
     "price": 2850,
     "gif": "BeanPoleFullSculpture.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/bean-pole.png"
   },
   {
     "id": "counterpoint-large",
@@ -42,7 +42,7 @@
     "widthFeet": 2.917,
     "price": 2550,
     "gif": "CounterpointFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/counterpoint.png"
   },
   {
     "id": "desert-flame-large",
@@ -51,7 +51,7 @@
     "widthFeet": 1.417,
     "price": 1600,
     "gif": "DesertFlameFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/desert-flame.png"
   },
   {
     "id": "desert-lily-large",
@@ -60,7 +60,7 @@
     "widthFeet": 1.833,
     "price": 1300,
     "gif": "DesertLilyFullwPole375x1500.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/desert-lily.png"
   },
   {
     "id": "desert-lily-x-large",
@@ -69,7 +69,7 @@
     "widthFeet": 2.667,
     "price": 2300,
     "gif": "DesertLilyFullwPole375x1500.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/desert-lily.png"
   },
   {
     "id": "desert-palm-large",
@@ -78,7 +78,7 @@
     "widthFeet": 2.583,
     "price": 2100,
     "gif": "DesertPalmFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/desert-palm.png"
   },
   {
     "id": "double-dancer-huge",
@@ -87,7 +87,7 @@
     "widthFeet": 5.083,
     "price": 7600,
     "gif": "DoubleDancerFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-dancer.png"
   },
   {
     "id": "double-dancer-large",
@@ -96,7 +96,7 @@
     "widthFeet": 2.083,
     "price": 2250,
     "gif": "DoubleDancerFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-dancer.png"
   },
   {
     "id": "double-dancer-small",
@@ -105,7 +105,7 @@
     "widthFeet": 1.583,
     "price": 1200,
     "gif": "DoubleDancerFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-dancer.png"
   },
   {
     "id": "double-dancer-sub-huge",
@@ -114,7 +114,7 @@
     "widthFeet": 4.083,
     "price": 5300,
     "gif": "DoubleDancerFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-dancer.png"
   },
   {
     "id": "double-dancer-x-large",
@@ -123,7 +123,7 @@
     "widthFeet": 3.167,
     "price": 3700,
     "gif": "DoubleDancerFull.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-dancer.png"
   },
   {
     "id": "double-helix-horizontal-huge",
@@ -132,7 +132,7 @@
     "widthFeet": 5.167,
     "price": 6900,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-horizontal-large",
@@ -141,7 +141,7 @@
     "widthFeet": 2.167,
     "price": 1650,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-horizontal-medium",
@@ -150,7 +150,7 @@
     "widthFeet": 2.167,
     "price": 1200,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-horizontal-small",
@@ -159,7 +159,7 @@
     "widthFeet": 1.667,
     "price": 800,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-horizontal-sub-huge",
@@ -168,7 +168,7 @@
     "widthFeet": 4.083,
     "price": 4600,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-horizontal-x-huge",
@@ -177,7 +177,7 @@
     "widthFeet": 6.583,
     "price": 13900,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-horizontal-x-large",
@@ -186,7 +186,7 @@
     "widthFeet": 3.083,
     "price": 2650,
     "gif": "DHHFull-355X1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-horizontal.png"
   },
   {
     "id": "double-helix-sail-huge",
@@ -195,7 +195,7 @@
     "widthFeet": 5.833,
     "price": 6900,
     "gif": "DHS-Full-WPole-400x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-sail.png"
   },
   {
     "id": "double-helix-sail-large",
@@ -204,7 +204,7 @@
     "widthFeet": 2.417,
     "price": 1650,
     "gif": "DHS-Full-WPole-400x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-sail.png"
   },
   {
     "id": "double-helix-sail-medium",
@@ -213,7 +213,7 @@
     "widthFeet": 2.167,
     "price": 1200,
     "gif": "DHS-Full-WPole-400x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-sail.png"
   },
   {
     "id": "double-helix-sail-small",
@@ -222,7 +222,7 @@
     "widthFeet": 1.667,
     "price": 800,
     "gif": "DHS-Full-WPole-400x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-sail.png"
   },
   {
     "id": "double-helix-sail-sub-huge",
@@ -231,7 +231,7 @@
     "widthFeet": 4.167,
     "price": 4600,
     "gif": "DHS-Full-WPole-400x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-sail.png"
   },
   {
     "id": "double-helix-sail-x-large",
@@ -240,7 +240,7 @@
     "widthFeet": 3.333,
     "price": 2650,
     "gif": "DHS-Full-WPole-400x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-sail.png"
   },
   {
     "id": "double-helix-vertical-huge",
@@ -249,7 +249,7 @@
     "widthFeet": 5.083,
     "price": 6900,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-helix-vertical-large",
@@ -258,7 +258,7 @@
     "widthFeet": 2.25,
     "price": 1650,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-helix-vertical-medium",
@@ -267,7 +267,7 @@
     "widthFeet": 1.917,
     "price": 1200,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-helix-vertical-small",
@@ -276,7 +276,7 @@
     "widthFeet": 1.5,
     "price": 800,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-helix-vertical-sub-huge",
@@ -285,7 +285,7 @@
     "widthFeet": 3.833,
     "price": 4600,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-helix-vertical-x-huge",
@@ -294,7 +294,7 @@
     "widthFeet": 5.833,
     "price": 13900,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-helix-vertical-x-large",
@@ -303,7 +303,7 @@
     "widthFeet": 2.917,
     "price": 2650,
     "gif": "DHV-Full-wPole-370px-X-1200px.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-helix-vertical.png"
   },
   {
     "id": "double-spinner-gyro-max",
@@ -312,7 +312,7 @@
     "widthFeet": 9.5,
     "price": 39550,
     "gif": "DoubleSpinnerFullwPole450x1300.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-spinner.png"
   },
   {
     "id": "double-spinner-huge",
@@ -321,7 +321,7 @@
     "widthFeet": 6,
     "price": 11600,
     "gif": "DoubleSpinnerFullwPole450x1300.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-spinner.png"
   },
   {
     "id": "double-spinner-large",
@@ -330,7 +330,7 @@
     "widthFeet": 2.583,
     "price": 2300,
     "gif": "DoubleSpinnerFullwPole450x1300.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-spinner.png"
   },
   {
     "id": "double-spinner-sub-huge",
@@ -339,7 +339,7 @@
     "widthFeet": 4.667,
     "price": 6100,
     "gif": "DoubleSpinnerFullwPole450x1300.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-spinner.png"
   },
   {
     "id": "double-spinner-x-huge",
@@ -348,7 +348,7 @@
     "widthFeet": 7.333,
     "price": 21400,
     "gif": "DoubleSpinnerFullwPole450x1300.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-spinner.png"
   },
   {
     "id": "double-spinner-x-large",
@@ -357,7 +357,7 @@
     "widthFeet": 3.75,
     "price": 3300,
     "gif": "DoubleSpinnerFullwPole450x1300.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/double-spinner.png"
   },
   {
     "id": "eclipse-large",
@@ -366,7 +366,7 @@
     "widthFeet": 1.667,
     "price": 1100,
     "gif": "EclipseFullwPole370x1600.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/eclipse.png"
   },
   {
     "id": "eclipse-x-large",
@@ -375,7 +375,7 @@
     "widthFeet": 2.5,
     "price": 1900,
     "gif": "EclipseFullwPole370x1600.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/eclipse.png"
   },
   {
     "id": "elements-air",
@@ -384,7 +384,7 @@
     "widthFeet": 2.5,
     "price": 475,
     "gif": "ElementAirFullwPole450x1400.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/elements-air.png"
   },
   {
     "id": "elements-earth",
@@ -393,7 +393,7 @@
     "widthFeet": 2.417,
     "price": 700,
     "gif": "ElementEarthFullwPole475x1400.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/elements-earth.png"
   },
   {
     "id": "elements-fire",
@@ -402,7 +402,7 @@
     "widthFeet": 2.167,
     "price": 700,
     "gif": "ElementFireFullwPole425x1450.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/elements-fire.png"
   },
   {
     "id": "elements-water",
@@ -411,7 +411,7 @@
     "widthFeet": 2.5,
     "price": 700,
     "gif": "ElementWaterFullwPole465x1500.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/elements-water.png"
   },
   {
     "id": "elements-of-the-universe-x-large",
@@ -420,7 +420,7 @@
     "widthFeet": 4.583,
     "price": 4500,
     "gif": "EOUFullwPole575x1200.gif",
-    "thumb": "thumbs/sample-sculpture-8ft.png"
+    "thumb": "thumbs/elements-of-the-universe.png"
   },
   {
     "id": "fleur-de-lis-large",

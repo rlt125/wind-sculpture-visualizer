@@ -38,74 +38,28 @@
         <fieldset class="card disabled" data-card="scale">
           <legend>2. Set scale</legend>
 
-          <div class="tabs">
-            <button class="tab active" data-mode="two-point" type="button">Click 2 points</button>
-            <button class="tab" data-mode="preset" type="button">Use preset reference</button>
-            <button class="tab" data-mode="perspective" type="button">Perspective</button>
+          <p class="hint">Click <b>Add reference</b>, then click 2 points on something of known height in the photo (a fence post, a door, a person). Add a second reference at a different depth so sculptures auto-shrink toward the horizon. Add more refs for better accuracy.</p>
+          <div class="row">
+            <label>Real height</label>
+            <input id="persp-distance" type="number" step="0.1" min="0.1" value="6" />
+            <select id="persp-unit">
+              <option value="ft">ft</option>
+              <option value="m">m</option>
+              <option value="in">in</option>
+              <option value="cm">cm</option>
+            </select>
           </div>
-
-          <div class="tab-body" data-body="two-point">
-            <p class="hint">Click two points on something you know the size of (a fence post, a door, a car).</p>
-            <div class="row">
-              <label>Real distance</label>
-              <input id="two-point-distance" type="number" step="0.1" min="0.1" value="6" />
-              <select id="two-point-unit">
-                <option value="ft">ft</option>
-                <option value="m">m</option>
-                <option value="in">in</option>
-                <option value="cm">cm</option>
-              </select>
-            </div>
-            <div class="row">
-              <button id="btn-two-point-start" type="button">Click 2 points on photo</button>
-              <button id="btn-two-point-clear" type="button" class="ghost">Clear</button>
-            </div>
+          <div class="row">
+            <label title="Drop references whose implied scene constant is more than 2.5 median-absolute-deviations from the rest of the set. Needs 3+ refs to kick in.">
+              <input type="checkbox" id="reject-outliers" checked />
+              Auto-reject outlier refs
+            </label>
           </div>
-
-          <div class="tab-body hidden" data-body="preset">
-            <p class="hint">Pick something you can see in the photo, then drag its height on the image.</p>
-            <div class="row">
-              <label>Reference</label>
-              <select id="preset-ref">
-                <option value="6">Person (6 ft)</option>
-                <option value="7">Door (7 ft)</option>
-                <option value="8">Privacy fence (8 ft)</option>
-                <option value="6-fence">Privacy fence (6 ft)</option>
-                <option value="4">Picket fence (4 ft)</option>
-                <option value="custom">Custom...</option>
-              </select>
-              <input id="preset-custom" type="number" step="0.1" min="0.1" placeholder="feet" class="hidden" />
-            </div>
-            <div class="row">
-              <button id="btn-preset-start" type="button">Draw reference line on photo</button>
-              <button id="btn-preset-clear" type="button" class="ghost">Clear</button>
-            </div>
+          <div class="row">
+            <button id="btn-persp-add" type="button">Add reference</button>
+            <button id="btn-persp-clear" type="button" class="ghost">Clear all</button>
           </div>
-
-          <div class="tab-body hidden" data-body="perspective">
-            <p class="hint">Click 2 points on a reference (a fence post, a person). Then click 2 points on a <b>second</b> reference at a different depth (closer or farther). The app will auto-shrink sculptures placed toward the horizon.</p>
-            <div class="row">
-              <label>Real height</label>
-              <input id="persp-distance" type="number" step="0.1" min="0.1" value="6" />
-              <select id="persp-unit">
-                <option value="ft">ft</option>
-                <option value="m">m</option>
-                <option value="in">in</option>
-                <option value="cm">cm</option>
-              </select>
-            </div>
-            <div class="row">
-              <label title="Drop references whose implied scene constant is more than 2.5 median-absolute-deviations from the rest of the set. Needs 3+ refs to kick in.">
-                <input type="checkbox" id="reject-outliers" checked />
-                Auto-reject outlier refs
-              </label>
-            </div>
-            <div class="row">
-              <button id="btn-persp-add" type="button">Add reference</button>
-              <button id="btn-persp-clear" type="button" class="ghost">Clear all</button>
-            </div>
-            <ul id="persp-refs-list" class="ref-list"></ul>
-          </div>
+          <ul id="persp-refs-list" class="ref-list"></ul>
 
           <p class="readout" id="scale-readout">Not calibrated yet.</p>
         </fieldset>

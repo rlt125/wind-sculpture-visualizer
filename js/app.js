@@ -9,7 +9,7 @@
 // calibration (multi-reference, depth-interpolated px-per-ft).
 
 import { createStage } from "./composite.js";
-import { computeFromTwoPoints, toFeet } from "./scale.js";
+import { toFeet } from "./scale.js";
 import { loadCatalog, renderCatalogGrid, loadSource, DRAG_MIME } from "./catalog.js";
 import { saveStill, recordVideo } from "./recorder.js";
 
@@ -18,8 +18,7 @@ const stage = createStage(canvas);
 
 let catalogItems = [];
 let selectedCatalogItem = null;
-let calibMode = "two-point"; // "two-point" | "preset" | "perspective"
-let interactionMode = "idle"; // "idle" | "calibrate-two-point" | "calibrate-preset" | "calibrate-persp" | "drag" | "resize"
+let interactionMode = "idle"; // "idle" | "calibrate-ref" | "drag" | "resize"
 let dragAnchor = null;
 let dragBeforeImageXY = null; // to build an undo entry when a drag ends
 let resizeCtx = null;         // { id, anchorY, baseDrawH, startScale } during resize
@@ -137,74 +136,15 @@ function setStep(n) {
   });
 }
 
-// --- calibration: mode switch -------------------------------------------
-
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    calibMode = tab.dataset.mode;
-    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
-    document.querySelectorAll(".tab-body").forEach((b) => {
-      b.classList.toggle("hidden", b.dataset.body !== calibMode);
-    });
-  });
-});
-
-// --- calibration: two-point ---------------------------------------------
-
-const twoPointDistInput = document.getElementById("two-point-distance");
-const twoPointUnit = document.getElementById("two-point-unit");
-
-document.getElementById("btn-two-point-start").addEventListener("click", () => {
-  if (!stage.state.photo) return;
-  interactionMode = "calibrate-two-point";
-  stage.setCalibOverlay({ kind: "two-point", points: [] });
-  canvas.classList.add("cursor-crosshair");
-});
-
-document.getElementById("btn-two-point-clear").addEventListener("click", () => {
-  stage.clearCalibration();
-  stage.clearCalibOverlay();
-  updateReadouts();
-});
-
-// --- calibration: preset ------------------------------------------------
-
-const presetSelect = document.getElementById("preset-ref");
-const presetCustom = document.getElementById("preset-custom");
-
-presetSelect.addEventListener("change", () => {
-  presetCustom.classList.toggle("hidden", presetSelect.value !== "custom");
-});
-
-document.getElementById("btn-preset-start").addEventListener("click", () => {
-  if (!stage.state.photo) return;
-  interactionMode = "calibrate-preset";
-  stage.setCalibOverlay({ kind: "preset", top: null, bottom: null, feet: presetFeet() });
-  canvas.classList.add("cursor-crosshair");
-});
-
-document.getElementById("btn-preset-clear").addEventListener("click", () => {
-  stage.clearCalibration();
-  stage.clearCalibOverlay();
-  updateReadouts();
-});
-
-function presetFeet() {
-  const v = presetSelect.value;
-  if (v === "custom") return Number(presetCustom.value) || 6;
-  if (v === "6-fence") return 6;
-  return Number(v);
-}
-
-// --- calibration: perspective (multi-reference) -------------------------
+// --- calibration: references --------------------------------------------
 
 const perspDistInput = document.getElementById("persp-distance");
 const perspUnit = document.getElementById("persp-unit");
 
 document.getElementById("btn-persp-add").addEventListener("click", () => {
   if (!stage.state.photo) return;
-  interactionMode = "calibrate-persp";
-  stage.setCalibOverlay({ kind: "two-point", points: [], perspective: true });
+  interactionMode = "calibrate-ref";
+  stage.setCalibOverlay({ kind: "two-point", points: [] });
   canvas.classList.add("cursor-crosshair");
 });
 
@@ -230,50 +170,14 @@ canvas.addEventListener("pointerdown", (e) => {
   const { x, y } = stage.eventToCanvas(e);
   const img = stage.canvasToImage(x, y);
 
-  if (interactionMode === "calibrate-two-point" || interactionMode === "calibrate-persp") {
+  if (interactionMode === "calibrate-ref") {
     const o = stage.state.calibOverlay || { kind: "two-point", points: [] };
     const points = [...o.points, img];
     stage.setCalibOverlay({ ...o, points });
     if (points.length === 2) {
-      const isPersp = interactionMode === "calibrate-persp";
-      const feet = toFeet(
-        Number(isPersp ? perspDistInput.value : twoPointDistInput.value),
-        isPersp ? perspUnit.value : twoPointUnit.value,
-      );
-      if (isPersp) {
-        if (feet > 0) {
-          stage.addPerspectiveRef(points[0], points[1], feet);
-          updateReadouts();
-          enableCard("sculpture");
-          setStep(3);
-        }
-      } else {
-        const ppf = computeFromTwoPoints(points[0], points[1], feet);
-        if (ppf) {
-          stage.setUniformCalibration(ppf, points[0], points[1]);
-          updateReadouts();
-          enableCard("sculpture");
-          setStep(3);
-        }
-      }
-      interactionMode = "idle";
-      stage.clearCalibOverlay();
-      canvas.classList.remove("cursor-crosshair");
-    }
-    return;
-  }
-
-  if (interactionMode === "calibrate-preset") {
-    const o = stage.state.calibOverlay;
-    if (!o.top) {
-      stage.setCalibOverlay({ ...o, top: img });
-    } else {
-      const bottom = img;
-      const top = o.top;
-      stage.setCalibOverlay({ ...o, bottom });
-      const ppf = computeFromTwoPoints(top, bottom, o.feet);
-      if (ppf) {
-        stage.setUniformCalibration(ppf, top, bottom);
+      const feet = toFeet(Number(perspDistInput.value), perspUnit.value);
+      if (feet > 0) {
+        stage.addPerspectiveRef(points[0], points[1], feet);
         updateReadouts();
         enableCard("sculpture");
         setStep(3);
@@ -437,10 +341,7 @@ function updateReadouts() {
   const el = document.getElementById("scale-readout");
   const diag = stage.getEstimatorDiagnostics();
 
-  if (c.mode === "uniform" && c.pixelsPerFoot) {
-    el.textContent = `Calibrated · ${c.pixelsPerFoot.toFixed(1)} px / ft`;
-    el.classList.add("calibrated");
-  } else if (c.mode === "perspective" && c.refs.length) {
+  if (c.refs.length) {
     const n = c.refs.length;
     const conf = diag?.confidence != null ? ` · ${Math.round(diag.confidence * 100)}% confidence` : "";
     el.textContent = `Calibrated · ${n} reference${n > 1 ? "s" : ""}${conf}`;
@@ -453,33 +354,31 @@ function updateReadouts() {
   const listEl = document.getElementById("persp-refs-list");
   if (listEl) {
     listEl.innerHTML = "";
-    if (c.mode === "perspective") {
-      const rejectedSet = new Set(diag?.rejectedIds || []);
-      c.refs.forEach((r, i) => {
-        const li = document.createElement("li");
-        const span = document.createElement("span");
-        span.textContent = `ref #${r.id}: ${r.knownFeet.toFixed(2)} ft`;
-        if (rejectedSet.has(r.id)) {
-          li.classList.add("outlier");
-          const warn = document.createElement("span");
-          warn.className = "warn";
-          warn.textContent = " ⚠ outlier";
-          span.appendChild(warn);
-        }
-        const rm = document.createElement("button");
-        rm.type = "button";
-        rm.className = "ref-remove";
-        rm.textContent = "×";
-        rm.title = "Remove this reference";
-        rm.addEventListener("click", () => {
-          stage.removePerspectiveRef(i);
-          updateReadouts();
-        });
-        li.appendChild(span);
-        li.appendChild(rm);
-        listEl.appendChild(li);
+    const rejectedSet = new Set(diag?.rejectedIds || []);
+    c.refs.forEach((r, i) => {
+      const li = document.createElement("li");
+      const span = document.createElement("span");
+      span.textContent = `ref #${r.id}: ${r.knownFeet.toFixed(2)} ft`;
+      if (rejectedSet.has(r.id)) {
+        li.classList.add("outlier");
+        const warn = document.createElement("span");
+        warn.className = "warn";
+        warn.textContent = " ⚠ outlier";
+        span.appendChild(warn);
+      }
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "ref-remove";
+      rm.textContent = "×";
+      rm.title = "Remove this reference";
+      rm.addEventListener("click", () => {
+        stage.removePerspectiveRef(i);
+        updateReadouts();
       });
-    }
+      li.appendChild(span);
+      li.appendChild(rm);
+      listEl.appendChild(li);
+    });
   }
 }
 

@@ -22,11 +22,9 @@ export function createStage(canvas) {
     sculptures: [],          // [{ id, meta, source, position, flip, shadow }, ...]
     selectedId: null,
     calibration: {
-      // "uniform" = one pixelsPerFoot applied everywhere.
-      // "perspective" = interpolated from 2+ references at different image Ys.
-      mode: "uniform",
-      pixelsPerFoot: null,
-      refs: [],              // perspective: [{ imageY, pixelsPerFoot }, ...]
+      // Every entry is a user-marked reference: two clicks + known real
+      // height in feet. 1 ref → constant ppf; 2+ refs → depth-aware fit.
+      refs: [],
     },
     calibOverlay: null,      // active calibration UI
     chroma: null,            // lazy offscreen canvas for chroma-key pass
@@ -76,21 +74,14 @@ export function createStage(canvas) {
 
   // --- calibration --------------------------------------------------------
   //
-  // Depth-aware px-per-foot for a given image-Y.
-  //  - Uniform mode: constant everywhere (single scalar).
-  //  - Perspective mode: delegates to the currently-selected estimator from
-  //    js/estimators/*. Each estimator implements its own interpretation of
-  //    the reference list (midpoint-Y IDW, horizon-line fits, etc.).
-  //
-  // Each ref stores the raw click data + known height; estimators derive
-  // whatever (base-Y, pixel height, diagonal ppf, …) from that on the fly.
-  // `imageY` and `pixelsPerFoot` are kept on each ref for the overlay/
-  // outlier display, computed using midpoint-Y + diagonal so legacy UI
-  // readouts stay stable across model choice.
+  // The app has one scale model: a list of user-clicked references, each
+  // with a known real-world height. `pixelsPerFootAt(y)` delegates to the
+  // active estimator (see js/estimators/). A single ref produces a
+  // constant ppf; 2+ refs enable the depth-aware fit.
 
   function rebuildEstimatorModel() {
     const c = state.calibration;
-    if (c.mode !== "perspective" || c.refs.length === 0) {
+    if (c.refs.length === 0) {
       state.estimatorModel = null;
       return;
     }
@@ -112,64 +103,33 @@ export function createStage(canvas) {
   }
 
   function pixelsPerFootAt(imageY) {
-    const c = state.calibration;
-    if (c.mode === "uniform") return c.pixelsPerFoot;
-    if (c.refs.length === 0) return null;
+    if (state.calibration.refs.length === 0) return null;
     if (!state.estimatorModel) rebuildEstimatorModel();
     return state.estimatorModel ? state.estimatorModel.pixelsPerFootAt(imageY) : null;
   }
 
   function hasCalibration() {
-    const c = state.calibration;
-    if (c.mode === "uniform") return !!c.pixelsPerFoot;
-    return c.refs.length > 0;
+    return state.calibration.refs.length > 0;
   }
 
-  function setUniformCalibration(ppf, p1, p2) {
-    state.calibration = { mode: "uniform", pixelsPerFoot: ppf, refs: [], marker: p1 && p2 ? { p1, p2 } : null };
-    state.estimatorModel = null;
-  }
-
-  // Create a ref record from raw clicks + known real-world height (feet).
-  // Derived `imageY` (midpoint) and `pixelsPerFoot` (diagonal) are kept for
-  // the overlay/outlier readouts; the estimator modules re-derive what they
-  // need from p1/p2/knownFeet directly.
   function makeRefRecord(p1, p2, knownFeet) {
-    const pixelDist = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
-    return {
-      id: nextRefId++,
-      p1, p2, knownFeet,
-      imageY: (p1.y + p2.y) / 2,
-      pixelsPerFoot: pixelDist / knownFeet,
-    };
+    return { id: nextRefId++, p1, p2, knownFeet };
   }
 
   function addPerspectiveRef(p1, p2, knownFeet) {
-    if (state.calibration.mode !== "perspective") {
-      // Auto-upgrade from uniform: carry over the existing uniform ref (with
-      // its clicked points, if any) as the first perspective ref.
-      const prev = state.calibration;
-      state.calibration = { mode: "perspective", pixelsPerFoot: null, refs: [] };
-      if (prev.pixelsPerFoot && prev.marker) {
-        const diag = Math.hypot(prev.marker.p2.x - prev.marker.p1.x, prev.marker.p2.y - prev.marker.p1.y) || 1;
-        const prevKnownFeet = diag / prev.pixelsPerFoot;
-        state.calibration.refs.push(makeRefRecord(prev.marker.p1, prev.marker.p2, prevKnownFeet));
-      }
-    }
     state.calibration.refs.push(makeRefRecord(p1, p2, knownFeet));
     rebuildEstimatorModel();
   }
 
   function clearCalibration() {
-    state.calibration = { mode: "uniform", pixelsPerFoot: null, refs: [] };
+    state.calibration = { refs: [] };
     state.estimatorModel = null;
   }
 
   function removePerspectiveRef(idx) {
-    if (state.calibration.mode !== "perspective") return;
     state.calibration.refs.splice(idx, 1);
     if (state.calibration.refs.length === 0) {
-      clearCalibration();
+      state.estimatorModel = null;
     } else {
       rebuildEstimatorModel();
     }
@@ -469,25 +429,9 @@ export function createStage(canvas) {
   function drawOverlay() {
     // Persist calibration references so the user can see what was captured.
     const c = state.calibration;
-    if (c.mode === "uniform" && c.marker) {
-      drawRefMarker(c.marker.p1, c.marker.p2, `${c.pixelsPerFoot.toFixed(1)} px/ft`, "#4f8cff");
-    } else if (c.mode === "perspective") {
-      // Faint horizontal band at each reference's Y, plus the clicked segment.
-      ctx.save();
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(79,140,255,0.4)";
-      ctx.fillStyle = "rgba(79,140,255,0.9)";
-      ctx.font = "11px system-ui";
-      c.refs.forEach((ref) => {
-        const p = imageToCanvas(0, ref.imageY);
-        ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(canvas.width, p.y); ctx.stroke();
-      });
-      ctx.restore();
-      c.refs.forEach((ref, i) => {
-        drawRefMarker(ref.p1, ref.p2,
-          `ref ${i + 1}: ${ref.pixelsPerFoot.toFixed(1)} px/ft`, "#4f8cff");
-      });
-    }
+    c.refs.forEach((ref, i) => {
+      drawRefMarker(ref.p1, ref.p2, `ref ${i + 1}: ${ref.knownFeet.toFixed(1)} ft`, "#4f8cff");
+    });
 
     const o = state.calibOverlay;
     if (!o) return;
@@ -501,13 +445,6 @@ export function createStage(canvas) {
       if (pts.length === 2) {
         ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.stroke();
       }
-    } else if (o.kind === "preset" && o.top && o.bottom) {
-      const a = imageToCanvas(o.top.x, o.top.y);
-      const b = imageToCanvas(o.bottom.x, o.bottom.y);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      [a, b].forEach((p) => { ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill(); });
-      ctx.font = "12px system-ui";
-      ctx.fillText(`${o.feet} ft`, (a.x + b.x) / 2 + 8, (a.y + b.y) / 2);
     }
     ctx.restore();
   }
@@ -553,7 +490,7 @@ export function createStage(canvas) {
     // photo
     setPhoto,
     // calibration
-    setUniformCalibration, addPerspectiveRef, clearCalibration, removePerspectiveRef,
+    addPerspectiveRef, clearCalibration, removePerspectiveRef,
     hasCalibration, pixelsPerFootAt,
     setEstimator, listEstimators, getEstimatorDiagnostics,
     setEstimatorOption, getEstimatorOptions,

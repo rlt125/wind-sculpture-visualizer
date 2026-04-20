@@ -291,29 +291,6 @@ select {
 
 input[type="number"] { width: 90px; }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  margin: 6px 0 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.tab {
-  background: transparent;
-  color: var(--muted);
-  border: 0;
-  padding: 6px 10px;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-}
-
-.tab:hover { color: var(--text); background: transparent; }
-
-.tab.active {
-  color: var(--text);
-  border-bottom-color: var(--accent);
-}
-
 .hidden { display: none !important; }
 
 .readout {

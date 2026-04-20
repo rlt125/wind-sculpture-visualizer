@@ -382,7 +382,9 @@ export function createStage(canvas) {
   // --- overlays (calibration) --------------------------------------------
 
   // Draw a persistent marker (two dots connected by a line) for a saved
-  // calibration reference, with a label next to it.
+  // calibration reference, with a label next to it. The label is clamped
+  // to the visible canvas so a ref whose clicked points extend beyond the
+  // photo still has a visible, legible annotation.
   function drawRefMarker(p1, p2, label, color) {
     if (!p1 || !p2) return;
     const a = imageToCanvas(p1.x, p1.y);
@@ -395,11 +397,17 @@ export function createStage(canvas) {
     [a, b].forEach((p) => { ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill(); });
     if (label) {
       ctx.font = "bold 12px system-ui";
+      const pad = 8;
+      // Start at the midpoint of the segment, then clamp into the canvas.
+      let tx = (a.x + b.x) / 2 + pad;
+      let ty = (a.y + b.y) / 2;
+      const m = ctx.measureText(label);
+      tx = Math.max(pad, Math.min(canvas.width - m.width - pad, tx));
+      ty = Math.max(16, Math.min(canvas.height - pad, ty));
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
       ctx.lineWidth = 3;
-      const tx = (a.x + b.x) / 2 + 8;
-      const ty = (a.y + b.y) / 2;
       ctx.strokeText(label, tx, ty);
+      ctx.fillStyle = color;
       ctx.fillText(label, tx, ty);
     }
     ctx.restore();

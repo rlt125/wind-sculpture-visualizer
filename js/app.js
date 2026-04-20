@@ -436,15 +436,33 @@ function updateReadouts() {
       : "No references yet.";
   }
 
-  // Render the per-reference list with individual remove buttons.
+  // Render the per-reference list with individual remove buttons. Highlight
+  // any ref whose px/ft is far from the median — that's almost always a
+  // miscalibration (clicked points were farther apart than the real-world
+  // distance entered, or at a different depth than intended).
   const listEl = document.getElementById("persp-refs-list");
   if (listEl) {
     listEl.innerHTML = "";
     if (c.mode === "perspective") {
+      const vals = c.refs.map((r) => r.pixelsPerFoot).sort((a, b) => a - b);
+      const median = vals.length
+        ? (vals.length % 2 ? vals[(vals.length - 1) / 2] : (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2)
+        : 0;
       c.refs.forEach((r, i) => {
         const li = document.createElement("li");
         const span = document.createElement("span");
         span.textContent = `ref ${i + 1}: ${r.pixelsPerFoot.toFixed(1)} px/ft @ y=${Math.round(r.imageY)}`;
+        // Flag outliers: >3× median or <1/3× median when there are 3+ refs.
+        if (c.refs.length >= 3 && median > 0) {
+          const ratio = r.pixelsPerFoot / median;
+          if (ratio > 3 || ratio < 1 / 3) {
+            li.classList.add("outlier");
+            const warn = document.createElement("span");
+            warn.className = "warn";
+            warn.textContent = " ⚠ likely miscalibrated";
+            span.appendChild(warn);
+          }
+        }
         const rm = document.createElement("button");
         rm.type = "button";
         rm.className = "ref-remove";

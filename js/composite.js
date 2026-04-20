@@ -31,6 +31,8 @@ export function createStage(canvas) {
     estimatorId: DEFAULT_ESTIMATOR_ID,
     estimatorModel: null,    // { pixelsPerFootAt, diagnostics } (rebuilt when refs change)
     estimatorOptions: { rejectOutliers: true },
+    exportMode: false,       // when true, skip all UI chrome (ref markers,
+                             // selection outlines, resize handles, tooltips)
   };
 
   let nextId = 1;
@@ -321,7 +323,7 @@ export function createStage(canvas) {
       }
       ctx.restore();
 
-      if (s.id === state.selectedId) {
+      if (s.id === state.selectedId && !state.exportMode) {
         ctx.save();
         ctx.strokeStyle = "#4f8cff";
         ctx.lineWidth = 2;
@@ -427,6 +429,8 @@ export function createStage(canvas) {
   }
 
   function drawOverlay() {
+    if (state.exportMode) return;
+
     // Persist calibration references so the user can see what was captured.
     const c = state.calibration;
     c.refs.forEach((ref, i) => {
@@ -452,14 +456,25 @@ export function createStage(canvas) {
   // --- render loop --------------------------------------------------------
 
   let rafId = null;
-  function loop() {
+  function renderOnce() {
     drawPhoto();
     drawSculptures();
     drawOverlay();
+  }
+  function loop() {
+    renderOnce();
     rafId = requestAnimationFrame(loop);
   }
   function start() { if (!rafId) loop(); }
   function stop() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
+
+  function setExportMode(on) {
+    state.exportMode = !!on;
+    // Force a clean frame so callers that snapshot synchronously (toBlob,
+    // captureStream) see the new state immediately instead of waiting for
+    // the next rAF.
+    renderOnce();
+  }
 
   // --- hit-test for dragging / selection ---------------------------------
 
@@ -486,7 +501,7 @@ export function createStage(canvas) {
 
   return {
     // lifecycle
-    start, stop, fitPhoto,
+    start, stop, fitPhoto, setExportMode,
     // photo
     setPhoto,
     // calibration

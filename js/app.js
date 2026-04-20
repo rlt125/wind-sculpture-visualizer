@@ -481,11 +481,21 @@ updateUndoButton();
 
 // --- export --------------------------------------------------------------
 
+// Exports hide the UI chrome (ref markers, selection outline, resize
+// handle, % tooltip) — the downloaded file shows only photo + sculptures.
+async function withExportMode(fn) {
+  stage.setExportMode(true);
+  try { return await fn(); }
+  finally { stage.setExportMode(false); }
+}
+
 document.getElementById("btn-save-png").addEventListener("click", () => {
-  saveStill(canvas, "image/png", 1.0, `wind-sculpture-${Date.now()}.png`).catch(reportErr);
+  withExportMode(() => saveStill(canvas, "image/png", 1.0, `wind-sculpture-${Date.now()}.png`))
+    .catch(reportErr);
 });
 document.getElementById("btn-save-jpg").addEventListener("click", () => {
-  saveStill(canvas, "image/jpeg", 0.92, `wind-sculpture-${Date.now()}.jpg`).catch(reportErr);
+  withExportMode(() => saveStill(canvas, "image/jpeg", 0.92, `wind-sculpture-${Date.now()}.jpg`))
+    .catch(reportErr);
 });
 
 const videoStatus = document.getElementById("video-status");
@@ -493,7 +503,7 @@ const videoSecondsInput = document.getElementById("video-seconds");
 document.getElementById("btn-save-video").addEventListener("click", async () => {
   const seconds = Math.max(1, Math.min(30, Number(videoSecondsInput.value) || 5));
   try {
-    await recordVideo(canvas, seconds, (msg) => (videoStatus.textContent = msg));
+    await withExportMode(() => recordVideo(canvas, seconds, (msg) => (videoStatus.textContent = msg)));
     videoStatus.textContent = "Saved.";
   } catch (err) {
     reportErr(err);

@@ -87,12 +87,16 @@ export function createStage(canvas) {
     if (imageY <= sorted[0].imageY) return sorted[0].pixelsPerFoot;
     const last = sorted[sorted.length - 1];
     if (imageY >= last.imageY) return last.pixelsPerFoot;
-    // Inverse-distance-squared weighting (Shepard's method, p=2).
+    // Inverse-distance^4 weighting (Shepard's method, p=4). Higher exponent
+    // than the usual p=2: we want the nearest reference to dominate strongly
+    // whenever the sculpture is close to it. At the midpoint between two
+    // refs, each contributes ~50%; anywhere closer to one ref, that ref's
+    // weight takes over quickly.
     let wSum = 0, vSum = 0;
     for (const r of refs) {
       const d = Math.abs(imageY - r.imageY);
       if (d < 0.5) return r.pixelsPerFoot; // effectively at this ref
-      const w = 1 / (d * d);
+      const w = 1 / (d * d * d * d);
       wSum += w;
       vSum += w * r.pixelsPerFoot;
     }

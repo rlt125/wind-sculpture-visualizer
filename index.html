@@ -95,8 +95,10 @@
               </select>
             </div>
             <div class="row">
-              <label title="Pick which perspective model turns your references into a depth-aware px/ft. See docs/estimators.md.">Model</label>
-              <select id="estimator-select"></select>
+              <label title="Drop references whose implied scene constant is more than 2.5 median-absolute-deviations from the rest of the set. Needs 3+ refs to kick in.">
+                <input type="checkbox" id="reject-outliers" checked />
+                Auto-reject outlier refs
+              </label>
             </div>
             <div class="row">
               <button id="btn-persp-add" type="button">Add reference</button>

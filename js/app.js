@@ -214,19 +214,12 @@ document.getElementById("btn-persp-clear").addEventListener("click", () => {
   updateReadouts();
 });
 
-// Populate the estimator selector from the registry and wire change events.
-const estimatorSelect = document.getElementById("estimator-select");
-if (estimatorSelect) {
-  for (const e of stage.listEstimators()) {
-    const opt = document.createElement("option");
-    opt.value = e.id;
-    opt.textContent = e.name;
-    opt.title = e.short || "";
-    if (e.id === stage.estimatorId) opt.selected = true;
-    estimatorSelect.appendChild(opt);
-  }
-  estimatorSelect.addEventListener("change", () => {
-    stage.setEstimator(estimatorSelect.value);
+// Outlier-rejection toggle for the perspective fit.
+const rejectOutliersToggle = document.getElementById("reject-outliers");
+if (rejectOutliersToggle) {
+  rejectOutliersToggle.checked = !!stage.getEstimatorOptions().rejectOutliers;
+  rejectOutliersToggle.addEventListener("change", () => {
+    stage.setEstimatorOption("rejectOutliers", rejectOutliersToggle.checked);
     updateReadouts();
   });
 }

@@ -1,20 +1,17 @@
 // Estimator registry.
 //
-// Each estimator exposes a `build(refs, ctx)` function that returns:
+// Currently exports a single depth-aware px-per-foot model. Structure is
+// kept so another model can be slotted in without touching composite.js.
+//
+// An estimator exposes `build(refs, ctx)` returning:
 //   { pixelsPerFootAt(y: number) -> number|null, diagnostics: object }
 //
-// `refs` are the raw stored refs on the stage: { id, p1, p2, knownFeet }.
-// `ctx` carries scene metadata (`imageHeight`) that some models use.
-//
-// Uniform calibration (a single scalar px-per-foot for the whole photo)
-// doesn't go through an estimator — it's the same for every Y.
+// `refs` are raw stored refs: { id, p1, p2, knownFeet }.
+// `ctx` carries scene metadata: { imageHeight, rejectOutliers }.
 
-import idwMidpoint from "./idw-midpoint.js";
-import horizonBasic from "./horizon-basic.js";
-import horizonRobust from "./horizon-robust.js";
-import linearFit from "./linear-fit.js";
+import horizonLinear from "./horizon-linear.js";
 
-export const ESTIMATORS = [idwMidpoint, horizonBasic, horizonRobust, linearFit];
+export const ESTIMATORS = [horizonLinear];
 
 const byId = new Map(ESTIMATORS.map((e) => [e.id, e]));
 
@@ -22,4 +19,4 @@ export function getEstimator(id) {
   return byId.get(id) || ESTIMATORS[0];
 }
 
-export const DEFAULT_ESTIMATOR_ID = linearFit.id;
+export const DEFAULT_ESTIMATOR_ID = horizonLinear.id;

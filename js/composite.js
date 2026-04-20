@@ -32,6 +32,7 @@ export function createStage(canvas) {
     chroma: null,            // lazy offscreen canvas for chroma-key pass
     estimatorId: DEFAULT_ESTIMATOR_ID,
     estimatorModel: null,    // { pixelsPerFootAt, diagnostics } (rebuilt when refs change)
+    estimatorOptions: { rejectOutliers: true },
   };
 
   let nextId = 1;
@@ -94,8 +95,20 @@ export function createStage(canvas) {
       return;
     }
     const est = getEstimator(state.estimatorId);
-    const ctx = { imageHeight: state.photo ? state.photo.naturalHeight : canvas.height };
+    const ctx = {
+      imageHeight: state.photo ? state.photo.naturalHeight : canvas.height,
+      ...state.estimatorOptions,
+    };
     state.estimatorModel = est.build(c.refs, ctx);
+  }
+
+  function setEstimatorOption(key, value) {
+    state.estimatorOptions[key] = value;
+    rebuildEstimatorModel();
+  }
+
+  function getEstimatorOptions() {
+    return { ...state.estimatorOptions };
   }
 
   function pixelsPerFootAt(imageY) {
@@ -543,6 +556,7 @@ export function createStage(canvas) {
     setUniformCalibration, addPerspectiveRef, clearCalibration, removePerspectiveRef,
     hasCalibration, pixelsPerFootAt,
     setEstimator, listEstimators, getEstimatorDiagnostics,
+    setEstimatorOption, getEstimatorOptions,
     get estimatorId() { return state.estimatorId; },
     // sculptures
     addSculpture, removeSculpture, restoreSculpture, selectSculpture,

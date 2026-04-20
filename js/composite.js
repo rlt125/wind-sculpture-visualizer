@@ -71,25 +71,30 @@ export function createStage(canvas) {
   // --- calibration --------------------------------------------------------
 
   // Depth-aware px-per-foot for a given image-Y. In uniform mode this is
-  // constant; in perspective mode we linearly interpolate between the two
-  // nearest references by Y, extrapolating outside the bracket.
+  // constant; in perspective mode we linearly interpolate between adjacent
+  // references, then clamp to the endpoints outside the calibrated range.
+  // No extrapolation: if the refs are close together, naive extrapolation
+  // compounds aggressively and makes sculptures placed below the nearest
+  // ref (i.e. closer to the viewer) explode in size. Clamping prevents that
+  // — the cost is that sculptures "past" the near ref stop growing.
   function pixelsPerFootAt(imageY) {
     const c = state.calibration;
     if (c.mode === "uniform") return c.pixelsPerFoot;
     const refs = c.refs;
     if (refs.length === 0) return null;
     if (refs.length === 1) return refs[0].pixelsPerFoot;
-    // Find the bracketing pair (or nearest pair for extrapolation).
     const sorted = [...refs].sort((a, b) => a.imageY - b.imageY);
-    let lo = sorted[0], hi = sorted[sorted.length - 1];
+    if (imageY <= sorted[0].imageY) return sorted[0].pixelsPerFoot;
+    const last = sorted[sorted.length - 1];
+    if (imageY >= last.imageY) return last.pixelsPerFoot;
     for (let i = 0; i < sorted.length - 1; i++) {
-      if (imageY >= sorted[i].imageY && imageY <= sorted[i + 1].imageY) {
-        lo = sorted[i]; hi = sorted[i + 1]; break;
+      const lo = sorted[i], hi = sorted[i + 1];
+      if (imageY >= lo.imageY && imageY <= hi.imageY) {
+        const t = (imageY - lo.imageY) / (hi.imageY - lo.imageY);
+        return lo.pixelsPerFoot + t * (hi.pixelsPerFoot - lo.pixelsPerFoot);
       }
     }
-    const t = (imageY - lo.imageY) / (hi.imageY - lo.imageY || 1);
-    const ppf = lo.pixelsPerFoot + t * (hi.pixelsPerFoot - lo.pixelsPerFoot);
-    return Math.max(0.1, ppf); // clamp so we never get 0/negative at horizon
+    return sorted[0].pixelsPerFoot; // unreachable
   }
 
   function hasCalibration() {

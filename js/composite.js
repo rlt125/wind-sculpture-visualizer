@@ -85,6 +85,12 @@ export function createStage(canvas) {
   const CLOSE_CAP = 2.5;
   const FAR_MIN = 0.05;
 
+  // Lyman Whitaker's price-list heights (e.g. "6′4″ h") appear to be total
+  // fabricated height — the pole runs below the sculpture and a portion gets
+  // buried at install. Subtract this so the sculpture renders at its visible
+  // above-ground height. Override per entry via manifest `buriedFeet`.
+  const DEFAULT_BURIED_FEET = 1.5;
+
   function pixelsPerFootAt(imageY) {
     const c = state.calibration;
     if (c.mode === "uniform") return c.pixelsPerFoot;
@@ -277,24 +283,39 @@ export function createStage(canvas) {
     const visMaxY = vis ? vis.maxY : srcH - 1;
     const visH = visMaxY - visMinY + 1;
     const visCenterXFrac = (visMinX + visMaxX + 1) / (2 * srcW);
-    const visBottomYFrac = (visMaxY + 1) / srcH;
+
+    // Treat heightFeet as the total fabricated height (with pole). The
+    // bottom `buriedFeet` of the source sits underground; the anchor is the
+    // ground line, not the tip of the pole.
+    const buriedFeet = Math.max(0, Math.min(
+      s.meta.buriedFeet ?? DEFAULT_BURIED_FEET,
+      s.meta.heightFeet - 0.1
+    ));
+    const totalFeet = s.meta.heightFeet;
+    const aboveGroundFrac = (totalFeet - buriedFeet) / totalFeet;
+    // Ground-line Y within the full source, as a fraction of srcH.
+    const groundYFrac = (visMinY + aboveGroundFrac * visH) / srcH;
 
     const scale = s.scale || 1;
-    // Scale the full source so the visible sculpture is heightFeet tall.
-    const imgScale = (s.meta.heightFeet * ppf * scale) / visH;
+    // Scale the full source so heightFeet (fabricated) maps to the visible
+    // bounds; the above-ground portion then ends up `heightFeet - buriedFeet`
+    // tall in world units.
+    const imgScale = (totalFeet * ppf * scale) / visH;
     const drawH = srcH * imgScale * f.scale;
     const drawW = srcW * imgScale * f.scale;
 
     const anchor = imageToCanvas(s.position.imageX, s.position.imageY);
-    // Position the full source so the visible bottom lands on the anchor.
-    const drawY = anchor.y - visBottomYFrac * drawH;
+    // Position so the ground line lands on the anchor. The buried portion
+    // extends below and is clipped at draw time.
+    const drawY = anchor.y - groundYFrac * drawH;
     const drawX = anchor.x - visCenterXFrac * drawW;
 
-    // Visible sub-rect in canvas coords (selection outline + hit-test + shadow)
+    // Above-ground visible sub-rect in canvas coords (selection outline +
+    // hit-test + shadow). The buried portion is excluded on purpose.
     const visX = drawX + (visMinX / srcW) * drawW;
     const visY = drawY + (visMinY / srcH) * drawH;
     const visW = ((visMaxX - visMinX + 1) / srcW) * drawW;
-    const visHC = (visH / srcH) * drawH;
+    const visHC = (aboveGroundFrac * visH / srcH) * drawH;
 
     return {
       x: drawX, y: drawY, w: drawW, h: drawH, anchor, srcW, srcH,
@@ -322,6 +343,11 @@ export function createStage(canvas) {
       const hasChroma = s.source.kind === "mp4" && !s.meta.mp4HasAlpha && s.meta.chromaKey;
       const el = hasChroma ? chromaKeyed(s.source.el, s.meta.chromaKey, b.srcW, b.srcH) : s.source.el;
       ctx.save();
+      // Clip at the ground line so the buried portion of the pole doesn't
+      // paint over the landscape photo.
+      ctx.beginPath();
+      ctx.rect(0, 0, canvas.width, b.anchor.y);
+      ctx.clip();
       if (s.flip) {
         ctx.translate(b.x + b.w, b.y);
         ctx.scale(-1, 1);

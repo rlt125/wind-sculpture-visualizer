@@ -98,20 +98,28 @@ export function createStage(canvas) {
     return c.refs.length > 0;
   }
 
-  function setUniformCalibration(ppf) {
-    state.calibration = { mode: "uniform", pixelsPerFoot: ppf, refs: [] };
+  function setUniformCalibration(ppf, p1, p2) {
+    state.calibration = { mode: "uniform", pixelsPerFoot: ppf, refs: [], marker: p1 && p2 ? { p1, p2 } : null };
   }
 
-  function addPerspectiveRef(imageY, ppf) {
+  function addPerspectiveRef(imageY, ppf, p1, p2) {
     if (state.calibration.mode !== "perspective") {
-      // Auto-upgrade from uniform: seed with the existing uniform ref at the
-      // previous default placement Y if we had one, then add the new one.
-      const existing = state.calibration.pixelsPerFoot;
-      const existingY = state.photo ? state.photo.naturalHeight * 0.75 : 0;
+      // Auto-upgrade from uniform: carry over the existing uniform ref (with
+      // its clicked points, if any) as the first perspective ref.
+      const prev = state.calibration;
       state.calibration = { mode: "perspective", pixelsPerFoot: null, refs: [] };
-      if (existing) state.calibration.refs.push({ imageY: existingY, pixelsPerFoot: existing });
+      if (prev.pixelsPerFoot) {
+        const prevY = prev.marker
+          ? (prev.marker.p1.y + prev.marker.p2.y) / 2
+          : (state.photo ? state.photo.naturalHeight * 0.75 : 0);
+        state.calibration.refs.push({
+          imageY: prevY,
+          pixelsPerFoot: prev.pixelsPerFoot,
+          p1: prev.marker?.p1, p2: prev.marker?.p2,
+        });
+      }
     }
-    state.calibration.refs.push({ imageY, pixelsPerFoot: ppf });
+    state.calibration.refs.push({ imageY, pixelsPerFoot: ppf, p1, p2 });
   }
 
   function clearCalibration() {
@@ -276,20 +284,51 @@ export function createStage(canvas) {
 
   // --- overlays (calibration) --------------------------------------------
 
+  // Draw a persistent marker (two dots connected by a line) for a saved
+  // calibration reference, with a label next to it.
+  function drawRefMarker(p1, p2, label, color) {
+    if (!p1 || !p2) return;
+    const a = imageToCanvas(p1.x, p1.y);
+    const b = imageToCanvas(p2.x, p2.y);
+    ctx.save();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    [a, b].forEach((p) => { ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill(); });
+    if (label) {
+      ctx.font = "bold 12px system-ui";
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 3;
+      const tx = (a.x + b.x) / 2 + 8;
+      const ty = (a.y + b.y) / 2;
+      ctx.strokeText(label, tx, ty);
+      ctx.fillText(label, tx, ty);
+    }
+    ctx.restore();
+  }
+
   function drawOverlay() {
-    // Always draw existing perspective references as faded labelled lines.
-    if (state.calibration.mode === "perspective") {
+    // Persist calibration references so the user can see what was captured.
+    const c = state.calibration;
+    if (c.mode === "uniform" && c.marker) {
+      drawRefMarker(c.marker.p1, c.marker.p2, `${c.pixelsPerFoot.toFixed(1)} px/ft`, "#4f8cff");
+    } else if (c.mode === "perspective") {
+      // Faint horizontal band at each reference's Y, plus the clicked segment.
       ctx.save();
       ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(79,140,255,0.6)";
-      ctx.fillStyle = "rgba(79,140,255,0.8)";
-      ctx.font = "12px system-ui";
-      state.calibration.refs.forEach((ref, i) => {
+      ctx.strokeStyle = "rgba(79,140,255,0.4)";
+      ctx.fillStyle = "rgba(79,140,255,0.9)";
+      ctx.font = "11px system-ui";
+      c.refs.forEach((ref) => {
         const p = imageToCanvas(0, ref.imageY);
         ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(canvas.width, p.y); ctx.stroke();
-        ctx.fillText(`ref ${i + 1}: ${ref.pixelsPerFoot.toFixed(1)} px/ft`, 8, p.y - 4);
       });
       ctx.restore();
+      c.refs.forEach((ref, i) => {
+        drawRefMarker(ref.p1, ref.p2,
+          `ref ${i + 1}: ${ref.pixelsPerFoot.toFixed(1)} px/ft`, "#4f8cff");
+      });
     }
 
     const o = state.calibOverlay;

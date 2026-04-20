@@ -201,9 +201,9 @@ canvas.addEventListener("pointerdown", (e) => {
       if (ppf) {
         if (isPersp) {
           const midY = (points[0].y + points[1].y) / 2;
-          stage.addPerspectiveRef(midY, ppf);
+          stage.addPerspectiveRef(midY, ppf, points[0], points[1]);
         } else {
-          stage.setUniformCalibration(ppf);
+          stage.setUniformCalibration(ppf, points[0], points[1]);
         }
         updateReadouts();
         enableCard("sculpture");
@@ -226,7 +226,7 @@ canvas.addEventListener("pointerdown", (e) => {
       stage.setCalibOverlay({ ...o, bottom });
       const ppf = computeFromTwoPoints(top, bottom, o.feet);
       if (ppf) {
-        stage.setUniformCalibration(ppf);
+        stage.setUniformCalibration(ppf, top, bottom);
         updateReadouts();
         enableCard("sculpture");
         setStep(3);

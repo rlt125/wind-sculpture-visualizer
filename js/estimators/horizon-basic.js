@@ -1,23 +1,27 @@
 // Estimator 2: Horizon basic.
 //
-// The minimal version of the horizon-line idea. Uses base-Y as the depth
+// Minimal pinhole-camera / horizon-line model. Uses base-Y as the depth
 // anchor (not midpoint-Y) and vertical pixel height (not diagonal).
 //
-// Pinhole-camera model, level camera on a flat ground plane. For any object
-// of real height H standing on the ground at image-Y y_b:
-//     h_px = C · H / (y_b − h_horizon)
-// so the px-per-foot at that base is:
-//     ppf(y) = C / (y − h_horizon)
+// Derivation: camera at height H_cam above flat ground, looking level.
+// A ground point at world distance D projects to image-Y such that
+// (y − h_horizon) = f · H_cam / D, so D = f·H_cam / (y − h).
+// An object of real height H at that point has pixel height
+//   h_px = f · H / D = H · (y − h) / H_cam
+// and therefore
+//   ppf(y) = h_px / H = (y − h) / H_cam  ≡  K · (y − h)
+// with K = 1/H_cam constant across the scene.
 //
-// C should be the same constant across all references (it's a property of
-// the camera + scene, not of any one object). We:
-//   1. Search horizonY to minimize MAD of the per-ref C values.
-//   2. Take the median C at the best horizonY as the scene constant.
-//   3. Expose `ppf(y) = C / (y − h)` as pixelsPerFootAt.
+// Per-reference:
+//   ppf_i = |base.y − top.y| / knownFeet_i
+//   K_i   = ppf_i / (base.y_i − h)           ← constant across refs for a good h
 //
-// Keeps things deliberately lean: no outlier rejection, no confidence score,
-// no hybrid fallback. Fewer knobs than horizon-robust; meant to isolate the
-// effect of the model change from everything else.
+// Fit:
+//   grid-search h to minimize MAD(K_i); take K = median(K_i at best h).
+//
+// This is deliberately spare: no outlier rejection, no confidence score,
+// no hybrid fallback — just the model switch. It isolates the effect of
+// using (base-Y, vertical span, linear model) from the other refinements.
 
 import { deriveRef, median, mad } from "./util.js";
 
@@ -27,13 +31,17 @@ function searchHorizon(refs, imageHeight) {
   if (maxH <= minH) return null;
 
   const score = (h) => {
-    const Cs = [];
+    const Ks = [];
     for (const r of refs) {
       const d = r.baseY - h;
       if (d <= 1) return Number.POSITIVE_INFINITY;
-      Cs.push(r.ppfVertical * d);
+      Ks.push(r.ppfVertical / d);
     }
-    return mad(Cs);
+    // Scale-invariant spread: MAD relative to the median (K varies in
+    // magnitude across typical photos, so raw MAD would prefer whichever
+    // h makes K small).
+    const m = median(Ks);
+    return m > 0 ? mad(Ks) / m : Number.POSITIVE_INFINITY;
   };
 
   let bestH = minH, bestS = Number.POSITIVE_INFINITY;
@@ -45,13 +53,13 @@ function searchHorizon(refs, imageHeight) {
     const s = score(h);
     if (s < bestS) { bestS = s; bestH = h; }
   }
-  return { h: bestH, spread: bestS };
+  return { h: bestH, relSpread: bestS };
 }
 
 export default {
   id: "horizon-basic",
   name: "Horizon basic",
-  short: "ppf(y) = C / (y − h), base-Y anchored, vertical ppf, median C",
+  short: "ppf(y) = K · (y − h), base-Y anchored, vertical ppf, median K",
   build(refs, ctx) {
     const derived = refs.map(deriveRef);
     const imageHeight = ctx?.imageHeight || 1080;
@@ -64,7 +72,7 @@ export default {
         diagnostics: {
           model: "horizon-basic",
           horizonY: null,
-          sceneConstant: r ? r.ppfVertical * 100 : null,
+          sceneConstant: null,
           acceptedIds: r ? [r.id] : [],
           rejectedIds: [],
           notes: ["Need 2+ refs for horizon fit; returning a constant ppf."],
@@ -80,13 +88,15 @@ export default {
       };
     }
 
-    const Cs = derived.map((r) => r.ppfVertical * (r.baseY - fit.h));
-    const C = median(Cs);
+    const Ks = derived.map((r) => r.ppfVertical / (r.baseY - fit.h));
+    const K = median(Ks);
 
     const pixelsPerFootAt = (y) => {
       const d = y - fit.h;
-      if (d <= 1) return C / 1;
-      return C / d;
+      // Above or at the horizon: clamp to a small positive so rendering
+      // doesn't invert. Scenes don't place sculptures above the horizon.
+      if (d <= 1) return Math.max(0.1, K);
+      return K * d;
     };
 
     return {
@@ -94,13 +104,13 @@ export default {
       diagnostics: {
         model: "horizon-basic",
         horizonY: fit.h,
-        sceneConstant: C,
-        fitSpread: fit.spread,
+        sceneConstant: K,
+        fitSpread: fit.relSpread,
         acceptedIds: derived.map((r) => r.id),
         rejectedIds: [],
         notes: [
-          `Fitted horizon y=${fit.h.toFixed(1)}, C=${C.toFixed(1)}`,
-          `Per-ref C spread (MAD): ${fit.spread.toFixed(2)}`,
+          `Fitted horizon y=${fit.h.toFixed(1)}, K=${K.toFixed(4)} (= 1/H_cam)`,
+          `Relative spread of K (MAD/median): ${fit.relSpread.toFixed(3)}`,
         ],
       },
     };

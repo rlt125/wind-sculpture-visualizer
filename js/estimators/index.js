@@ -12,9 +12,9 @@
 import idwMidpoint from "./idw-midpoint.js";
 import horizonBasic from "./horizon-basic.js";
 import horizonRobust from "./horizon-robust.js";
-import reciprocalFit from "./reciprocal-fit.js";
+import linearFit from "./linear-fit.js";
 
-export const ESTIMATORS = [idwMidpoint, horizonBasic, horizonRobust, reciprocalFit];
+export const ESTIMATORS = [idwMidpoint, horizonBasic, horizonRobust, linearFit];
 
 const byId = new Map(ESTIMATORS.map((e) => [e.id, e]));
 
@@ -22,4 +22,4 @@ export function getEstimator(id) {
   return byId.get(id) || ESTIMATORS[0];
 }
 
-export const DEFAULT_ESTIMATOR_ID = reciprocalFit.id;
+export const DEFAULT_ESTIMATOR_ID = linearFit.id;

@@ -23,12 +23,43 @@ those primitives. That derivation is centralized in
 The registry in `js/estimators/index.js` exposes `ESTIMATORS`,
 `getEstimator(id)`, and `DEFAULT_ESTIMATOR_ID`.
 
+## Physical model (estimators 2–4)
+
+Pinhole camera at height `H_cam` above a flat ground plane, looking
+level. A point on the ground at world distance `D` from the camera
+projects to image-Y `y_b` with:
+
+```
+y_b − h_horizon  =  f · H_cam / D           (f = focal length)
+```
+
+A vertical object of real height `H` at that point has pixel height:
+
+```
+h_px  =  f · H / D  =  H · (y_b − h_horizon) / H_cam
+```
+
+so the local px-per-foot is:
+
+```
+ppf(y)  =  h_px / H  =  (y − h) / H_cam  ≡  K · (y − h)
+```
+
+with `K = 1 / H_cam` constant across the whole scene. **px/ft is linear
+in (y − h): sculptures get bigger as they move toward the viewer
+(larger y), smaller as they approach the horizon.**
+
+> Note: an earlier revision implemented `ppf(y) = A / (y − h)` based on
+> a pseudocode snippet. That formula is inverted — it shrinks sculptures
+> as they approach the viewer — and was fixed. The file previously named
+> `reciprocal-fit.js` is now `linear-fit.js`.
+
 ---
 
 ## 1. `idw-midpoint` — IDW midpoint (original)
 
-The app's original perspective model. Preserved unchanged so every
-regression test is framed against it.
+The app's original perspective model. Preserved unchanged so regressions
+can be framed against it.
 
 **Per-reference scalar**
 ```
@@ -37,27 +68,23 @@ y_i   = (p1.y + p2.y) / 2                   # midpoint Y
 ```
 
 **Lookup across Y**
-- **Inside the calibrated Y-range** (between the smallest and largest
-  `y_i`): Shepard's inverse-distance weighting with p = 2:
+- **Inside the calibrated Y-range**: Shepard's inverse-distance weighting
+  with p = 2:
   ```
   ppf(y) = Σ (ppf_i / d_i²) / Σ (1 / d_i²)   where d_i = |y − y_i|
   ```
-  Exact at each ref, smooth between. Every ref contributes.
-- **Below the near ref** (toward viewer): linear extrapolation along the
-  slope of the two nearest refs, clamped between `ppf_near` and
-  `2.5 · ppf_near`.
-- **Above the far ref** (toward horizon): same extrapolation, clamped
-  between `0.05 · ppf_far` and `ppf_far`.
+- **Below the near ref** (toward viewer): linear slope extrapolation,
+  clamped to `[ppf_near, 2.5·ppf_near]`.
+- **Above the far ref** (toward horizon): clamped to
+  `[0.05·ppf_far, ppf_far]`.
 
 **Known weaknesses**
-- Filing a ref's depth at its midpoint Y is geometrically wrong: the
-  object stands at its **base**, not its middle. A tall near-field ref
-  gets filed farther from the camera than it actually is, which distorts
-  the whole interpolation.
+- Filing a ref's depth at its midpoint Y is geometrically wrong — the
+  object stands at its base, not its middle. A tall near-field ref is
+  filed farther from the camera than it actually is.
 - Diagonal pixel distance mixes vertical (depth-varying) with horizontal
   (depth-invariant) click jitter.
-- No physical model: nothing guarantees that a well-calibrated scene
-  should produce any particular invariant across refs.
+- No physical model: nothing guarantees ref-to-ref consistency.
 
 **Diagnostics**
 ```
@@ -69,34 +96,30 @@ y_i   = (p1.y + p2.y) / 2                   # midpoint Y
 ## 2. `horizon-basic` — Horizon basic
 
 Minimal version of the horizon-line model. Same physical formulation as
-the next two estimators, but with none of the robustness extras — so if
-the horizon-line model produces different behavior from IDW on a given
-photo, it's this change-in-model that did it, not MAD rejection or
-weighting.
-
-**Model**
-
-Pinhole camera, level, on a flat ground plane. For any object of real
-height `H` standing on the ground at image-Y `y_b`:
-```
-h_px = C · H / (y_b − h_horizon)
-```
-so:
-```
-ppf(y) = C / (y − h_horizon)
-```
+estimators 3 and 4, but with none of the robustness extras — so if the
+horizon-line model produces different results from IDW on a given photo,
+it's the change-in-model that did it, not MAD rejection or weighting.
 
 **Per-reference**
 ```
 ppf_i = |base.y − top.y| / knownFeet        # vertical span only
-C_i   = ppf_i · (base.y_i − h)              # per candidate horizon h
+K_i   = ppf_i / (base.y_i − h)              # per candidate horizon h
 ```
 
 **Fit**
 
 Grid-search `h ∈ [−0.5·imageHeight, min(base.y_i) − 2]`, coarse step 4 px
-then refine at 0.5 px. Pick the `h` that minimizes `MAD(C_i)`. Set the
-scene constant `C = median(C_i at that h)`.
+then refine at 0.5 px. Pick the `h` that minimizes the relative MAD of
+`K_i` (MAD divided by median, so the search doesn't collapse to
+whichever `h` makes K tiny). Set `K = median(K_i)` at the best `h`.
+
+**Lookup**
+```
+ppf(y) = K · (y − h)            for y > h + 1
+ppf(y) = max(0.1, K)            at or above the horizon (sculptures
+                                 shouldn't be placed there, but we
+                                 still return something positive)
+```
 
 **Fallback**
 
@@ -105,7 +128,7 @@ variation, which is the right behavior with one data point).
 
 **Diagnostics**
 ```
-{ model: "horizon-basic", horizonY, sceneConstant, fitSpread,
+{ model: "horizon-basic", horizonY, sceneConstant (K), fitSpread,
   acceptedIds, rejectedIds: [], notes }
 ```
 
@@ -114,78 +137,72 @@ variation, which is the right behavior with one data point).
 ## 3. `horizon-robust` — Horizon robust
 
 Extends `horizon-basic` with the parts of the Criminisi-style pipeline
-that have a usable input in this app (manual clicks, no object
-classifier).
+that have usable input in a manual-click UI.
 
 **Adds**
 - **Automatic outlier rejection**: after the horizon fit, compute
-  `C_i = ppf_i · (base.y_i − h)`, take `medianC` and `MAD`. Drop refs
-  with `|C_i − medianC| > 2.5 · MAD`. Take `C` as the weighted median of
-  the survivors (weights = per-ref `annotationConfidence`, defaults to 1
-  since the UI doesn't capture it yet).
-- **Confidence score** (0–1), combining:
-  - accepted-ref count (few refs → lower score)
-  - `1 − 3·relSpread` (tighter fit = higher)
-  - base-Y spread across refs (more depth diversity = better horizon)
-  - a small penalty for outliers rejected
-- **Plausible range** on `C`: 15th–85th percentile of accepted values.
+  `K_i = ppf_i / (base.y_i − h)`; drop refs with
+  `|K_i − medianK| > 2.5·MAD`. Final `K` = weighted median of survivors
+  (weights = per-ref `annotationConfidence`, defaults to 1).
+- **Confidence score** (0–1), combining accepted-ref count, tightness of
+  fit (relative MAD), and base-Y spread across refs (depth diversity
+  constrains the horizon more).
+- **Plausible range** on K: 15th–85th percentile of accepted values.
 
-**Deliberately omitted** from the proposal that inspired this model:
-- Class weights per object type (`person`, `door`, `stop_sign`, …) — no
-  classifier to assign them.
-- Support-plane IDs — one implicit ground plane.
-- Occlusion / cropped / non-vertical flags — user clicks what they can
-  see; if the clicks went through, the ref is usable.
-- Hybrid local-ratio fallback — redundant once the horizon model works.
+**Deliberately omitted** from the source proposal (no input in our UI):
+- Class weights per object type.
+- Support-plane IDs.
+- Occlusion / cropped / non-vertical flags.
+- Hybrid local-ratio fallback.
 
 **Diagnostics**
 ```
-{ model: "horizon-robust", horizonY, sceneConstant, plausibleC, fitSpread,
-  confidence, acceptedIds, rejectedIds, notes }
+{ model: "horizon-robust", horizonY, sceneConstant (K), plausibleC,
+  fitSpread, confidence, acceptedIds, rejectedIds, notes }
 ```
 
 ---
 
-## 4. `reciprocal-fit` — Reciprocal fit *(default)*
+## 4. `linear-fit` — Linear fit *(default)*
 
-Direct implementation of the "base-point anchored reciprocal perspective
-fit with robust outlier rejection" pseudocode. Mathematically identical
-to `horizon-robust` for the core formula; differs in style and
-conservatism.
+Follows the same physical model with a lean style inspired by the
+"base-point anchored perspective fit with robust outlier rejection"
+pseudocode — but with the formula corrected from reciprocal to linear.
 
 **Core**
 
-Same model as above: `ppf(y) = A / (y − h)`, where `A` is scene-constant.
+```
+ppf(y) = K · (y − h)            y > h + 1
+         idw-midpoint fallback   y ≤ h + 1
+```
 
 **Fit**
 
 ```
 for each candidate h:
-  A_i = ppf_i · (base.y_i − h)
-  score = MAD(A_i)
-pick h minimizing score  →  medianA, madA
-accept refs with |A_i − medianA| ≤ 2.5·MAD
-A = median(accepted A_i)                  # flat median, not weighted
+  K_i   = ppf_i / (base.y_i − h)
+  score = MAD(K_i) / median(K_i)        # relative MAD
+pick h minimizing score      →   medianK, madK
+accept refs with |K_i − medianK| ≤ 2.5·MAD
+K = median(accepted K_i)                 # flat median, not weighted
 ```
 
 **Fallback**
 
 For any `y ≤ h + 1` (at or above the fitted horizon), defer to the
-`idw-midpoint` estimator — the reciprocal formula blows up at the
-horizon, so sculptures placed there fall back to local interpolation
-rather than returning a garbage value.
+`idw-midpoint` estimator. The linear formula goes to zero or negative
+there; IDW still returns something plausible for sculptures placed
+unusually high in the frame.
 
 **Differences from `horizon-robust`**
-- No confidence score, no plausible-range field; just `fitError` (the
-  MAD of accepted A values).
-- Flat median instead of weighted median — appropriate when every ref
-  has the same trust level.
-- Built-in IDW fallback above the horizon (robust doesn't do this;
-  clamps to `C / 1` instead).
+- No confidence score, no plausible-range field; just `fitError`.
+- Flat median instead of weighted median.
+- Built-in IDW fallback above the horizon; `horizon-robust` clamps to
+  `max(0.1, K)` instead.
 
 **Diagnostics**
 ```
-{ model: "reciprocal-fit", horizonY, sceneConstant, fitError,
+{ model: "linear-fit", horizonY, sceneConstant (K), fitError,
   acceptedIds, rejectedIds, notes }
 ```
 
@@ -193,12 +210,12 @@ rather than returning a garbage value.
 
 ## Comparison cheat-sheet
 
-| Estimator         | Depth anchor | Ref pixel extent | Cross-depth model     | Outlier rejection  | Confidence |
-| ----------------- | ------------ | ---------------- | --------------------- | ------------------ | ---------- |
-| `idw-midpoint`    | midpoint Y   | diagonal         | Shepard IDW + clamps  | none (UI flag only) | no         |
-| `horizon-basic`   | base Y       | vertical         | `C / (y − h)`         | none               | no         |
-| `horizon-robust`  | base Y       | vertical         | `C / (y − h)`         | MAD (2.5×), weighted median | yes (0–1) + range |
-| `reciprocal-fit`  | base Y       | vertical         | `A / (y − h)`, IDW above horizon | MAD (2.5×), flat median | no (just fitError) |
+| Estimator         | Depth anchor | Ref pixel extent | Cross-depth model       | Outlier rejection              | Confidence |
+| ----------------- | ------------ | ---------------- | ----------------------- | ------------------------------ | ---------- |
+| `idw-midpoint`    | midpoint Y   | diagonal         | Shepard IDW + clamps    | none (UI flag only)            | no         |
+| `horizon-basic`   | base Y       | vertical         | `K · (y − h)`           | none                           | no         |
+| `horizon-robust`  | base Y       | vertical         | `K · (y − h)`           | MAD (2.5×), weighted median    | yes + range |
+| `linear-fit`      | base Y       | vertical         | `K · (y − h)`, IDW at horizon | MAD (2.5×), flat median  | no (fitError) |
 
 ## Assumptions common to 2–4
 
@@ -213,14 +230,22 @@ rather than returning a garbage value.
 If any of those break badly, `idw-midpoint` will often degrade more
 gracefully — it's making no physical claims, just smoothing samples.
 
-## Testing approach
+## Sanity test
 
-Open the same photo with a fixed set of references, then flip the
-**Model** dropdown between all four. The `estimator-diag` panel shows
-the fitted horizon and scene constant for each, plus which refs were
-rejected. For a known-good placement, record the visible pixel height
-of a sculpture under each model and compare to a tape-measure ground
-truth.
+Synthetic data generated with the correct pinhole physics
+(`ppf(y) = 0.25 · (y − 300)`, two refs at baseY=600 and 800, each 6 ft):
+
+| model            | y=400 | y=500 | y=600 | y=700 | y=800 | y=900 |
+| ---------------- | ----- | ----- | ----- | ----- | ----- | ----- |
+| **expected**     | 25    | 50    | 75    | 100   | 125   | 150   |
+| `idw-midpoint`   | 100   | 200   | 300   | 312   | 312   | 312   |
+| `horizon-basic`  | 25    | 50    | 75    | 100   | 125   | 150   |
+| `horizon-robust` | 25    | 50    | 75    | 100   | 125   | 150   |
+| `linear-fit`     | 25    | 50    | 75    | 100   | 125   | 150   |
+
+All three horizon models recover exact physics; `idw-midpoint` diverges
+because of midpoint-Y filing + diagonal span, and flattens outside the
+ref range because of the near-clamp.
 
 ## File map
 
@@ -230,7 +255,7 @@ js/estimators/
   idw-midpoint.js      estimator 1
   horizon-basic.js     estimator 2
   horizon-robust.js    estimator 3
-  reciprocal-fit.js    estimator 4
+  linear-fit.js        estimator 4 (was reciprocal-fit.js)
   index.js             registry
 js/composite.js        delegates perspective ppf to selected estimator
 js/app.js              model dropdown, diagnostics render

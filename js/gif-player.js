@@ -102,15 +102,58 @@ export async function loadAnimatedGif(url) {
   // treat this canvas interchangeably with an HTMLImageElement.
   canvas.naturalWidth = W;
   canvas.naturalHeight = H;
-  // Compute the bounding box of non-transparent pixels in the first frame
-  // so the renderer can size/anchor to the visible sculpture, not the
-  // (possibly-padded) GIF canvas. Done once per load.
-  canvas.visibleBounds = computeVisibleBounds(ctx, W, H);
+  // Compute the bounding box of all non-transparent pixels across EVERY
+  // frame. Sizing from just the first frame underestimates the extent of
+  // animations that sweep a wider area (spinner blades, swinging arms) and
+  // makes the renderer scale everything up too aggressively.
+  canvas.visibleBounds = computeFramesBounds(frames, W, H);
   return canvas;
 }
 
-// Scan the canvas for the tight non-transparent bounding box. Returns null
-// if the canvas is entirely transparent.
+// Bounds across a sample of frames with pixel subsampling. Full scan would
+// be too slow for 100+ frame GIFs — this samples ~12 representative frames
+// and steps through pixels every 2 px, which is plenty accurate for the
+// purpose of finding the visible sculpture's extent.
+function computeFramesBounds(frames, W, H) {
+  const N = frames.length;
+  const sampleCount = Math.min(N, 12);
+  const indices = new Set();
+  for (let i = 0; i < sampleCount; i++) {
+    indices.add(Math.floor((i * (N - 1)) / (sampleCount - 1 || 1)));
+  }
+  let minX = W, minY = H, maxX = -1, maxY = -1;
+  const STEP = 2;
+  for (const idx of indices) {
+    const frame = frames[idx];
+    const { top, left, width, height } = frame.dims;
+    const patch = frame.patch;
+    const stride = width * 4;
+    for (let py = 0; py < height; py += STEP) {
+      const rowBase = py * stride + 3;
+      for (let px = 0; px < width; px += STEP) {
+        if (patch[rowBase + px * 4] > 32) {
+          const x = left + px, y = top + py;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+  }
+  if (maxX < 0) return null;
+  // Expand by STEP on each side to account for the sampling gap — we want a
+  // slight overestimate (no visible pixel outside the box) rather than a
+  // tight-but-maybe-cropping one.
+  return {
+    minX: Math.max(0, minX - STEP),
+    minY: Math.max(0, minY - STEP),
+    maxX: Math.min(W - 1, maxX + STEP),
+    maxY: Math.min(H - 1, maxY + STEP),
+  };
+}
+
+// Single-canvas scan (used by catalog.js for static images).
 export function computeVisibleBounds(ctx, w, h) {
   const data = ctx.getImageData(0, 0, w, h).data;
   let minX = w, minY = h, maxX = -1, maxY = -1;

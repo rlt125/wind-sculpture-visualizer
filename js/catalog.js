@@ -19,12 +19,21 @@ export async function loadCatalog() {
   return res.json();
 }
 
+export const DRAG_MIME = "application/x-wind-sculpture-id";
+
 export function renderCatalogGrid(container, items, onSelect) {
   container.innerHTML = "";
   items.forEach((item) => {
     const el = document.createElement("div");
     el.className = "catalog-item";
     el.dataset.id = item.id;
+    el.draggable = true;
+
+    el.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData(DRAG_MIME, item.id);
+      e.dataTransfer.setData("text/plain", item.name);
+      e.dataTransfer.effectAllowed = "copy";
+    });
 
     let thumb;
     if (item.thumb) {
@@ -32,6 +41,7 @@ export function renderCatalogGrid(container, items, onSelect) {
       thumb.className = "thumb";
       thumb.alt = item.name;
       thumb.src = `catalog/${item.thumb}`;
+      thumb.draggable = false; // let the outer div own the drag
       thumb.onerror = () => {
         const fb = document.createElement("div");
         fb.className = "thumb-fallback";

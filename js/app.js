@@ -10,7 +10,7 @@
 
 import { createStage } from "./composite.js";
 import { computeFromTwoPoints, toFeet } from "./scale.js";
-import { loadCatalog, renderCatalogGrid, loadSource } from "./catalog.js";
+import { loadCatalog, renderCatalogGrid, loadSource, DRAG_MIME } from "./catalog.js";
 import { saveStill, recordVideo } from "./recorder.js";
 
 const canvas = document.getElementById("stage");
@@ -77,6 +77,38 @@ fileInput.addEventListener("change", (e) => {
 canvas.parentElement.addEventListener("drop", (e) => {
   const file = e.dataTransfer?.files?.[0];
   if (file) handleImageFile(file);
+});
+
+// Drag a sculpture tile onto the canvas to place it at the drop point.
+canvas.addEventListener("dragover", (e) => {
+  if (e.dataTransfer?.types?.includes(DRAG_MIME)) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  }
+});
+canvas.addEventListener("drop", async (e) => {
+  const id = e.dataTransfer?.getData(DRAG_MIME);
+  if (!id) return; // let file drops flow to the parent handler
+  e.preventDefault();
+  e.stopPropagation();
+  if (!stage.hasCalibration()) {
+    alert("Set a scale first (step 2) before placing a sculpture.");
+    return;
+  }
+  const item = catalogItems.find((it) => it.id === id);
+  if (!item) return;
+  const { x, y } = stage.eventToCanvas(e);
+  const img = stage.canvasToImage(x, y);
+  await addSculptureFromItem(item, { imageX: img.x, imageY: img.y });
+});
+
+// Browsers treat un-handled image drops as "open the image" and navigate
+// away, nuking the app state. Swallow them everywhere outside our canvas.
+window.addEventListener("dragover", (e) => {
+  if (e.dataTransfer?.types?.includes(DRAG_MIME)) e.preventDefault();
+});
+window.addEventListener("drop", (e) => {
+  if (e.dataTransfer?.types?.includes(DRAG_MIME)) e.preventDefault();
 });
 
 function handleImageFile(file) {
@@ -347,9 +379,21 @@ function syncToggles() {
 async function onSculpturePick(item) {
   selectedCatalogItem = item;
   if (!stage.hasCalibration()) return;
+  await addSculptureFromItem(item);
+}
+
+// Shared add logic used by both click-to-place and drag-and-drop. When
+// positionImage is supplied, the sculpture lands there; otherwise it uses
+// the default "roughly center, 3/4 down" slot from composite.js.
+async function addSculptureFromItem(item, positionImage) {
+  selectedCatalogItem = item;
   try {
     const source = await loadSource(item, sourceKindSelect.value);
     const entry = stage.addSculpture(item, source);
+    if (positionImage) {
+      entry.position.imageX = positionImage.imageX;
+      entry.position.imageY = positionImage.imageY;
+    }
     entry.flip = flipToggle.checked;
     entry.shadow = shadowToggle.checked;
     pushUndo({ kind: "add", id: entry.id });

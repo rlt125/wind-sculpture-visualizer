@@ -41,6 +41,7 @@
           <div class="tabs">
             <button class="tab active" data-mode="two-point" type="button">Click 2 points</button>
             <button class="tab" data-mode="preset" type="button">Use preset reference</button>
+            <button class="tab" data-mode="perspective" type="button">Perspective</button>
           </div>
 
           <div class="tab-body" data-body="two-point">
@@ -81,6 +82,25 @@
             </div>
           </div>
 
+          <div class="tab-body hidden" data-body="perspective">
+            <p class="hint">Click 2 points on a reference (a fence post, a person). Then click 2 points on a <b>second</b> reference at a different depth (closer or farther). The app will auto-shrink sculptures placed toward the horizon.</p>
+            <div class="row">
+              <label>Real height</label>
+              <input id="persp-distance" type="number" step="0.1" min="0.1" value="6" />
+              <select id="persp-unit">
+                <option value="ft">ft</option>
+                <option value="m">m</option>
+                <option value="in">in</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+            <div class="row">
+              <button id="btn-persp-add" type="button">Add reference</button>
+              <button id="btn-persp-clear" type="button" class="ghost">Clear all</button>
+            </div>
+            <p class="readout" id="persp-refs-readout">No references yet.</p>
+          </div>
+
           <p class="readout" id="scale-readout">Not calibrated yet.</p>
         </fieldset>
 
@@ -101,7 +121,11 @@
               <option value="gif">Transparent GIF</option>
             </select>
           </div>
-          <p class="hint">Drag the sculpture on the photo to reposition.</p>
+          <div class="row">
+            <button id="btn-delete-selected" type="button" class="ghost">Delete selected</button>
+            <button id="btn-undo" type="button" class="ghost">Undo</button>
+          </div>
+          <p class="hint">Click a tile to add a sculpture. Drag any sculpture on the photo to reposition. Click the photo background to deselect.</p>
         </fieldset>
 
         <!-- Step 4: Export -->

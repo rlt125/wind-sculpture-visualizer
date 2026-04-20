@@ -1,30 +1,41 @@
 // Compositing and rendering.
 //
-// Owns the render loop. Draws three layers each frame:
+// Owns the render loop. Each frame draws:
 //   1) landscape photo (scaled to fit canvas, letterboxed)
-//   2) optional ground shadow under the sculpture
-//   3) the sculpture (from a <video> or <img>), optionally chroma-keyed
+//   2) any number of placed sculptures, each with optional ground shadow,
+//      optionally chroma-keyed if the source is MP4-without-alpha
+//   3) calibration overlays
+//   4) a subtle selection outline on the currently-selected sculpture
 //
-// Also handles interaction: calibration overlays (two-point line + preset
-// vertical line) and dragging the sculpture.
+// Sculpture position is stored in IMAGE-pixel coords (not feet) so that we
+// stay neutral to calibration mode — perspective (depth-varying px/ft)
+// would otherwise require mapping feet back and forth constantly.
 
 export function createStage(canvas) {
   const ctx = canvas.getContext("2d", { willReadFrequently: false });
 
   const state = {
-    photo: null,              // HTMLImageElement
-    photoFit: null,           // { dx, dy, dw, dh, scale } — how the photo is laid out on the canvas
-    sculpture: null,          // { meta, source: {kind, el}, position: {xFeet, yFeet}, flip, shadow }
-    calibOverlay: null,       // { kind: "two-point" | "preset", ... }
-    pixelsPerFoot: null,
-    chroma: null,             // offscreen canvas for chroma-key pass, lazy-init
+    photo: null,             // HTMLImageElement
+    photoFit: null,          // { dx, dy, dw, dh, scale }
+    sculptures: [],          // [{ id, meta, source, position, flip, shadow }, ...]
+    selectedId: null,
+    calibration: {
+      // "uniform" = one pixelsPerFoot applied everywhere.
+      // "perspective" = interpolated from 2+ references at different image Ys.
+      mode: "uniform",
+      pixelsPerFoot: null,
+      refs: [],              // perspective: [{ imageY, pixelsPerFoot }, ...]
+    },
+    calibOverlay: null,      // active calibration UI
+    chroma: null,            // lazy offscreen canvas for chroma-key pass
   };
+
+  let nextId = 1;
 
   // --- layout -------------------------------------------------------------
 
   function fitPhoto() {
     if (!state.photo) return;
-    // Match backing store to displayed pixels for crisp output.
     const rect = canvas.getBoundingClientRect();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(rect.width * dpr);
@@ -57,39 +68,109 @@ export function createStage(canvas) {
     return { x: (ev.clientX - rect.left) * dpr, y: (ev.clientY - rect.top) * dpr };
   }
 
-  // --- sculpture ----------------------------------------------------------
+  // --- calibration --------------------------------------------------------
 
-  // Default-place a newly selected sculpture roughly centered, sitting on the
-  // ground approximately 3/4 down the image.
+  // Depth-aware px-per-foot for a given image-Y. In uniform mode this is
+  // constant; in perspective mode we linearly interpolate between the two
+  // nearest references by Y, extrapolating outside the bracket.
+  function pixelsPerFootAt(imageY) {
+    const c = state.calibration;
+    if (c.mode === "uniform") return c.pixelsPerFoot;
+    const refs = c.refs;
+    if (refs.length === 0) return null;
+    if (refs.length === 1) return refs[0].pixelsPerFoot;
+    // Find the bracketing pair (or nearest pair for extrapolation).
+    const sorted = [...refs].sort((a, b) => a.imageY - b.imageY);
+    let lo = sorted[0], hi = sorted[sorted.length - 1];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (imageY >= sorted[i].imageY && imageY <= sorted[i + 1].imageY) {
+        lo = sorted[i]; hi = sorted[i + 1]; break;
+      }
+    }
+    const t = (imageY - lo.imageY) / (hi.imageY - lo.imageY || 1);
+    const ppf = lo.pixelsPerFoot + t * (hi.pixelsPerFoot - lo.pixelsPerFoot);
+    return Math.max(0.1, ppf); // clamp so we never get 0/negative at horizon
+  }
+
+  function hasCalibration() {
+    const c = state.calibration;
+    if (c.mode === "uniform") return !!c.pixelsPerFoot;
+    return c.refs.length > 0;
+  }
+
+  function setUniformCalibration(ppf) {
+    state.calibration = { mode: "uniform", pixelsPerFoot: ppf, refs: [] };
+  }
+
+  function addPerspectiveRef(imageY, ppf) {
+    if (state.calibration.mode !== "perspective") {
+      // Auto-upgrade from uniform: seed with the existing uniform ref at the
+      // previous default placement Y if we had one, then add the new one.
+      const existing = state.calibration.pixelsPerFoot;
+      const existingY = state.photo ? state.photo.naturalHeight * 0.75 : 0;
+      state.calibration = { mode: "perspective", pixelsPerFoot: null, refs: [] };
+      if (existing) state.calibration.refs.push({ imageY: existingY, pixelsPerFoot: existing });
+    }
+    state.calibration.refs.push({ imageY, pixelsPerFoot: ppf });
+  }
+
+  function clearCalibration() {
+    state.calibration = { mode: "uniform", pixelsPerFoot: null, refs: [] };
+  }
+
+  // --- sculptures ---------------------------------------------------------
+
   function defaultPosition() {
-    if (!state.photo || !state.pixelsPerFoot) return { xFeet: 0, yFeet: 0 };
-    const imgW = state.photo.naturalWidth;
-    const imgH = state.photo.naturalHeight;
+    if (!state.photo) return { imageX: 0, imageY: 0 };
     return {
-      xFeet: (imgW / 2) / state.pixelsPerFoot,
-      yFeet: (imgH * 0.75) / state.pixelsPerFoot,
+      imageX: state.photo.naturalWidth / 2,
+      imageY: state.photo.naturalHeight * 0.75,
     };
   }
 
-  function setSculpture(meta, source) {
-    state.sculpture = {
+  // Add a new sculpture. Returns the new entry so callers can push it into
+  // an undo stack.
+  function addSculpture(meta, source) {
+    const s = {
+      id: nextId++,
       meta,
-      source,                       // { kind: "mp4"|"gif", el: HTMLVideoElement|HTMLImageElement }
+      source,
       position: defaultPosition(),
       flip: false,
       shadow: true,
     };
+    state.sculptures.push(s);
+    state.selectedId = s.id;
+    return s;
   }
 
-  function clearSculpture() { state.sculpture = null; }
-
-  function setFlip(v) { if (state.sculpture) state.sculpture.flip = v; }
-  function setShadow(v) { if (state.sculpture) state.sculpture.shadow = v; }
-
-  function setPixelsPerFoot(ppf) {
-    state.pixelsPerFoot = ppf;
-    if (state.sculpture) state.sculpture.position = defaultPosition();
+  // Re-insert a previously-removed sculpture. Used by undo.
+  function restoreSculpture(s, atIndex) {
+    const idx = atIndex == null ? state.sculptures.length : atIndex;
+    state.sculptures.splice(idx, 0, s);
+    state.selectedId = s.id;
   }
+
+  function removeSculpture(id) {
+    const idx = state.sculptures.findIndex((s) => s.id === id);
+    if (idx < 0) return null;
+    const [removed] = state.sculptures.splice(idx, 1);
+    if (state.selectedId === id) {
+      state.selectedId = state.sculptures.length
+        ? state.sculptures[Math.max(0, idx - 1)].id
+        : null;
+    }
+    return { sculpture: removed, index: idx };
+  }
+
+  function selectSculpture(id) { state.selectedId = id; }
+
+  function getSelected() {
+    return state.sculptures.find((s) => s.id === state.selectedId) || null;
+  }
+
+  function setFlip(v) { const s = getSelected(); if (s) s.flip = v; }
+  function setShadow(v) { const s = getSelected(); if (s) s.shadow = v; }
 
   function setPhoto(img) {
     state.photo = img;
@@ -100,79 +181,69 @@ export function createStage(canvas) {
 
   function drawPhoto() {
     const f = state.photoFit;
-    if (!state.photo || !f) {
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(state.photo, f.dx, f.dy, f.dw, f.dh);
+    if (state.photo && f) ctx.drawImage(state.photo, f.dx, f.dy, f.dw, f.dh);
   }
 
   function sourceSize(src) {
-    if (src.kind === "mp4") {
-      return { w: src.el.videoWidth || 1, h: src.el.videoHeight || 1 };
-    }
+    if (src.kind === "mp4") return { w: src.el.videoWidth || 1, h: src.el.videoHeight || 1 };
     return { w: src.el.naturalWidth || 1, h: src.el.naturalHeight || 1 };
   }
 
-  function drawSculpture() {
-    const s = state.sculpture;
-    if (!s || !state.pixelsPerFoot || !state.photoFit) return;
-
-    const { w: srcW, h: srcH } = sourceSize(s.source);
-    if (!srcW || !srcH) return;
-
-    const hFeet = s.meta.heightFeet;
-    const imgHeightPx = hFeet * state.pixelsPerFoot;
-    const imgWidthPx = imgHeightPx * (srcW / srcH);
-
-    // Convert image-pixel space to canvas space (via photoFit scale)
+  function sculptureDrawBox(s) {
+    const ppf = pixelsPerFootAt(s.position.imageY);
     const f = state.photoFit;
+    if (!ppf || !f) return null;
+    const { w: srcW, h: srcH } = sourceSize(s.source);
+    if (!srcW || !srcH) return null;
+    const imgHeightPx = s.meta.heightFeet * ppf;
+    const imgWidthPx = imgHeightPx * (srcW / srcH);
     const drawH = imgHeightPx * f.scale;
     const drawW = imgWidthPx * f.scale;
+    const pos = imageToCanvas(s.position.imageX, s.position.imageY);
+    return { x: pos.x - drawW / 2, y: pos.y - drawH, w: drawW, h: drawH, anchor: pos, srcW, srcH };
+  }
 
-    // Position is in image-feet. Bottom-center of sculpture sits at that point.
-    const pos = imageToCanvas(s.position.xFeet * state.pixelsPerFoot, s.position.yFeet * state.pixelsPerFoot);
-    const drawX = pos.x - drawW / 2;
-    const drawY = pos.y - drawH;
+  function drawSculptures() {
+    if (!state.photoFit) return;
+    for (const s of state.sculptures) {
+      const b = sculptureDrawBox(s);
+      if (!b) continue;
 
-    // Shadow
-    if (s.shadow) {
-      ctx.save();
-      ctx.globalAlpha = 0.35;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.ellipse(pos.x, pos.y, drawW * 0.45, drawH * 0.04, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
+      if (s.shadow) {
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.ellipse(b.anchor.x, b.anchor.y, b.w * 0.45, b.h * 0.04, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
 
-    // The source (video or img). If it's an MP4 without alpha and a chromaKey
-    // is configured, do a chroma-key pass via an offscreen canvas.
-    const hasChroma = s.source.kind === "mp4" && !s.meta.mp4HasAlpha && s.meta.chromaKey;
-    const drawFn = (el) => {
+      const hasChroma = s.source.kind === "mp4" && !s.meta.mp4HasAlpha && s.meta.chromaKey;
+      const el = hasChroma ? chromaKeyed(s.source.el, s.meta.chromaKey, b.srcW, b.srcH) : s.source.el;
       ctx.save();
       if (s.flip) {
-        ctx.translate(drawX + drawW, drawY);
+        ctx.translate(b.x + b.w, b.y);
         ctx.scale(-1, 1);
-        ctx.drawImage(el, 0, 0, drawW, drawH);
+        ctx.drawImage(el, 0, 0, b.w, b.h);
       } else {
-        ctx.drawImage(el, drawX, drawY, drawW, drawH);
+        ctx.drawImage(el, b.x, b.y, b.w, b.h);
       }
       ctx.restore();
-    };
 
-    if (hasChroma) {
-      drawFn(chromaKeyed(s.source.el, s.meta.chromaKey, srcW, srcH));
-    } else {
-      drawFn(s.source.el);
+      if (s.id === state.selectedId) {
+        ctx.save();
+        ctx.strokeStyle = "#4f8cff";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.restore();
+      }
     }
   }
 
-  // Chroma-key an image/video frame into an offscreen canvas and return it.
-  // Removes pixels within Euclidean RGB distance `tolerance` of the key color.
   function chromaKeyed(el, hex, w, h) {
     if (!state.chroma) {
       state.chroma = document.createElement("canvas");
@@ -184,7 +255,6 @@ export function createStage(canvas) {
     const octx = off._ctx;
     octx.clearRect(0, 0, w, h);
     octx.drawImage(el, 0, 0, w, h);
-
     const { r: kr, g: kg, b: kb } = hexToRgb(hex);
     const tolerance = 80;
     const tSq = tolerance * tolerance;
@@ -207,6 +277,21 @@ export function createStage(canvas) {
   // --- overlays (calibration) --------------------------------------------
 
   function drawOverlay() {
+    // Always draw existing perspective references as faded labelled lines.
+    if (state.calibration.mode === "perspective") {
+      ctx.save();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(79,140,255,0.6)";
+      ctx.fillStyle = "rgba(79,140,255,0.8)";
+      ctx.font = "12px system-ui";
+      state.calibration.refs.forEach((ref, i) => {
+        const p = imageToCanvas(0, ref.imageY);
+        ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(canvas.width, p.y); ctx.stroke();
+        ctx.fillText(`ref ${i + 1}: ${ref.pixelsPerFoot.toFixed(1)} px/ft`, 8, p.y - 4);
+      });
+      ctx.restore();
+    }
+
     const o = state.calibOverlay;
     if (!o) return;
     ctx.save();
@@ -215,9 +300,7 @@ export function createStage(canvas) {
     ctx.fillStyle = "#4f8cff";
     if (o.kind === "two-point") {
       const pts = o.points.map((p) => imageToCanvas(p.x, p.y));
-      pts.forEach((p) => {
-        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
-      });
+      pts.forEach((p) => { ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill(); });
       if (pts.length === 2) {
         ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.stroke();
       }
@@ -237,48 +320,50 @@ export function createStage(canvas) {
   let rafId = null;
   function loop() {
     drawPhoto();
-    drawSculpture();
+    drawSculptures();
     drawOverlay();
     rafId = requestAnimationFrame(loop);
   }
   function start() { if (!rafId) loop(); }
   function stop() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
 
-  // --- hit-test for dragging ---------------------------------------------
+  // --- hit-test for dragging / selection ---------------------------------
 
-  function sculptureBounds() {
-    const s = state.sculpture;
-    if (!s || !state.pixelsPerFoot || !state.photoFit) return null;
-    const { w: srcW, h: srcH } = sourceSize(s.source);
-    if (!srcW || !srcH) return null;
-    const f = state.photoFit;
-    const drawH = s.meta.heightFeet * state.pixelsPerFoot * f.scale;
-    const drawW = drawH * (srcW / srcH);
-    const pos = imageToCanvas(s.position.xFeet * state.pixelsPerFoot, s.position.yFeet * state.pixelsPerFoot);
-    return { x: pos.x - drawW / 2, y: pos.y - drawH, w: drawW, h: drawH, anchor: pos };
+  // Returns the topmost sculpture id at a canvas-space point, or null.
+  // Iterates in reverse so the last-drawn (topmost) wins.
+  function sculptureAtPoint(cx, cy) {
+    for (let i = state.sculptures.length - 1; i >= 0; i--) {
+      const b = sculptureDrawBox(state.sculptures[i]);
+      if (!b) continue;
+      if (cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h) {
+        return state.sculptures[i].id;
+      }
+    }
+    return null;
   }
 
-  function isInsideSculpture(cx, cy) {
-    const b = sculptureBounds();
-    if (!b) return false;
-    return cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h;
-  }
-
-  function moveSculptureBy(dxCanvas, dyCanvas) {
-    const s = state.sculpture;
-    if (!s || !state.pixelsPerFoot || !state.photoFit) return;
+  function moveSelectedBy(dxCanvas, dyCanvas) {
+    const s = getSelected();
+    if (!s || !state.photoFit) return;
     const f = state.photoFit;
-    s.position.xFeet += (dxCanvas / f.scale) / state.pixelsPerFoot;
-    s.position.yFeet += (dyCanvas / f.scale) / state.pixelsPerFoot;
+    s.position.imageX += dxCanvas / f.scale;
+    s.position.imageY += dyCanvas / f.scale;
   }
 
   return {
     // lifecycle
     start, stop, fitPhoto,
-    // state setters
-    setPhoto, setPixelsPerFoot, setSculpture, clearSculpture, setFlip, setShadow,
+    // photo
+    setPhoto,
+    // calibration
+    setUniformCalibration, addPerspectiveRef, clearCalibration,
+    hasCalibration, pixelsPerFootAt,
+    // sculptures
+    addSculpture, removeSculpture, restoreSculpture, selectSculpture,
+    getSelected, setFlip, setShadow,
     // coords / hit-test
-    eventToCanvas, canvasToImage, imageToCanvas, isInsideSculpture, moveSculptureBy,
+    eventToCanvas, canvasToImage, imageToCanvas,
+    sculptureAtPoint, moveSelectedBy,
     // overlay
     setCalibOverlay(o) { state.calibOverlay = o; },
     clearCalibOverlay() { state.calibOverlay = null; },

@@ -3,28 +3,33 @@
 // Wires the UI (index.html) to the rendering stage (composite.js), the scale
 // model (scale.js), the catalog loader (catalog.js), and the export helpers
 // (recorder.js). No framework — just DOM events + small local state.
+//
+// Supports multiple sculptures on the photo, per-sculpture selection and
+// dragging, an undo stack for add/move/delete, and perspective-aware
+// calibration (multi-reference, depth-interpolated px-per-ft).
 
 import { createStage } from "./composite.js";
-import { createScaleState, computeFromTwoPoints, toFeet, readout } from "./scale.js";
+import { computeFromTwoPoints, toFeet } from "./scale.js";
 import { loadCatalog, renderCatalogGrid, loadSource } from "./catalog.js";
 import { saveStill, recordVideo } from "./recorder.js";
 
 const canvas = document.getElementById("stage");
 const stage = createStage(canvas);
-const scaleState = createScaleState();
 
 let catalogItems = [];
 let selectedCatalogItem = null;
-let calibMode = "two-point"; // "two-point" | "preset"
-let interactionMode = "idle"; // "idle" | "calibrate-two-point" | "calibrate-preset" | "drag"
+let calibMode = "two-point"; // "two-point" | "preset" | "perspective"
+let interactionMode = "idle"; // "idle" | "calibrate-two-point" | "calibrate-preset" | "calibrate-persp" | "drag"
 let dragAnchor = null;
+let dragBeforeImageXY = null; // to build an undo entry when a drag ends
+
+// Undo history: { kind: "add"|"move"|"delete", ... }
+const undoStack = [];
+function pushUndo(entry) { undoStack.push(entry); updateUndoButton(); }
 
 // --- setup --------------------------------------------------------------
 
-window.addEventListener("resize", () => {
-  stage.fitPhoto();
-});
-
+window.addEventListener("resize", () => stage.fitPhoto());
 stage.start();
 
 loadCatalog()
@@ -34,9 +39,7 @@ loadCatalog()
     const filter = document.getElementById("catalog-filter");
     const render = (q) => {
       const n = (q || "").trim().toLowerCase();
-      const filtered = n
-        ? items.filter((it) => it.name.toLowerCase().includes(n))
-        : items;
+      const filtered = n ? items.filter((it) => it.name.toLowerCase().includes(n)) : items;
       renderCatalogGrid(grid, filtered, onSculpturePick);
     };
     render("");
@@ -84,6 +87,7 @@ function handleImageFile(file) {
     dropHint.classList.add("hidden");
     enableCard("scale");
     setStep(2);
+    URL.revokeObjectURL(url);
   };
   img.src = url;
 }
@@ -125,11 +129,9 @@ document.getElementById("btn-two-point-start").addEventListener("click", () => {
 });
 
 document.getElementById("btn-two-point-clear").addEventListener("click", () => {
-  scaleState.points = [];
-  scaleState.pixelsPerFoot = null;
+  stage.clearCalibration();
   stage.clearCalibOverlay();
-  stage.setPixelsPerFoot(null);
-  updateReadout();
+  updateReadouts();
 });
 
 // --- calibration: preset ------------------------------------------------
@@ -149,10 +151,9 @@ document.getElementById("btn-preset-start").addEventListener("click", () => {
 });
 
 document.getElementById("btn-preset-clear").addEventListener("click", () => {
-  scaleState.pixelsPerFoot = null;
+  stage.clearCalibration();
   stage.clearCalibOverlay();
-  stage.setPixelsPerFoot(null);
-  updateReadout();
+  updateReadouts();
 });
 
 function presetFeet() {
@@ -162,28 +163,54 @@ function presetFeet() {
   return Number(v);
 }
 
+// --- calibration: perspective (multi-reference) -------------------------
+
+const perspDistInput = document.getElementById("persp-distance");
+const perspUnit = document.getElementById("persp-unit");
+
+document.getElementById("btn-persp-add").addEventListener("click", () => {
+  if (!stage.state.photo) return;
+  interactionMode = "calibrate-persp";
+  stage.setCalibOverlay({ kind: "two-point", points: [], perspective: true });
+  canvas.classList.add("cursor-crosshair");
+});
+
+document.getElementById("btn-persp-clear").addEventListener("click", () => {
+  stage.clearCalibration();
+  stage.clearCalibOverlay();
+  updateReadouts();
+});
+
 // --- canvas interaction --------------------------------------------------
 
 canvas.addEventListener("pointerdown", (e) => {
   const { x, y } = stage.eventToCanvas(e);
   const img = stage.canvasToImage(x, y);
 
-  if (interactionMode === "calibrate-two-point") {
+  if (interactionMode === "calibrate-two-point" || interactionMode === "calibrate-persp") {
     const o = stage.state.calibOverlay || { kind: "two-point", points: [] };
     const points = [...o.points, img];
-    stage.setCalibOverlay({ kind: "two-point", points });
+    stage.setCalibOverlay({ ...o, points });
     if (points.length === 2) {
-      const realFeet = toFeet(Number(twoPointDistInput.value), twoPointUnit.value);
-      const ppf = computeFromTwoPoints(points[0], points[1], realFeet);
+      const isPersp = interactionMode === "calibrate-persp";
+      const feet = toFeet(
+        Number(isPersp ? perspDistInput.value : twoPointDistInput.value),
+        isPersp ? perspUnit.value : twoPointUnit.value,
+      );
+      const ppf = computeFromTwoPoints(points[0], points[1], feet);
       if (ppf) {
-        scaleState.pixelsPerFoot = ppf;
-        scaleState.mode = "two-point";
-        stage.setPixelsPerFoot(ppf);
-        updateReadout();
+        if (isPersp) {
+          const midY = (points[0].y + points[1].y) / 2;
+          stage.addPerspectiveRef(midY, ppf);
+        } else {
+          stage.setUniformCalibration(ppf);
+        }
+        updateReadouts();
         enableCard("sculpture");
         setStep(3);
       }
       interactionMode = "idle";
+      stage.clearCalibOverlay();
       canvas.classList.remove("cursor-crosshair");
     }
     return;
@@ -197,35 +224,42 @@ canvas.addEventListener("pointerdown", (e) => {
       const bottom = img;
       const top = o.top;
       stage.setCalibOverlay({ ...o, bottom });
-      const feet = o.feet;
-      const ppf = computeFromTwoPoints(top, bottom, feet);
+      const ppf = computeFromTwoPoints(top, bottom, o.feet);
       if (ppf) {
-        scaleState.pixelsPerFoot = ppf;
-        scaleState.mode = "preset";
-        stage.setPixelsPerFoot(ppf);
-        updateReadout();
+        stage.setUniformCalibration(ppf);
+        updateReadouts();
         enableCard("sculpture");
         setStep(3);
       }
       interactionMode = "idle";
+      stage.clearCalibOverlay();
       canvas.classList.remove("cursor-crosshair");
     }
     return;
   }
 
-  // Drag the sculpture if the click is inside it.
-  if (stage.state.sculpture && stage.isInsideSculpture(x, y)) {
+  // Pick / drag logic: click on a sculpture selects + starts drag; click on
+  // empty area deselects.
+  const hitId = stage.sculptureAtPoint(x, y);
+  if (hitId != null) {
+    stage.selectSculpture(hitId);
     interactionMode = "drag";
     dragAnchor = { x, y };
+    const sel = stage.getSelected();
+    dragBeforeImageXY = sel ? { imageX: sel.position.imageX, imageY: sel.position.imageY } : null;
     canvas.setPointerCapture(e.pointerId);
     canvas.classList.add("cursor-grabbing");
+    syncToggles();
+  } else {
+    stage.selectSculpture(null);
+    syncToggles();
   }
 });
 
 canvas.addEventListener("pointermove", (e) => {
   if (interactionMode !== "drag" || !dragAnchor) return;
   const { x, y } = stage.eventToCanvas(e);
-  stage.moveSculptureBy(x - dragAnchor.x, y - dragAnchor.y);
+  stage.moveSelectedBy(x - dragAnchor.x, y - dragAnchor.y);
   dragAnchor = { x, y };
 });
 
@@ -235,13 +269,46 @@ canvas.addEventListener("pointerup", (e) => {
     canvas.classList.remove("cursor-grabbing");
     interactionMode = "idle";
     dragAnchor = null;
+    const sel = stage.getSelected();
+    if (sel && dragBeforeImageXY) {
+      const moved = Math.hypot(
+        sel.position.imageX - dragBeforeImageXY.imageX,
+        sel.position.imageY - dragBeforeImageXY.imageY,
+      );
+      if (moved > 1) {
+        pushUndo({
+          kind: "move", id: sel.id,
+          from: dragBeforeImageXY,
+          to: { imageX: sel.position.imageX, imageY: sel.position.imageY },
+        });
+      }
+    }
+    dragBeforeImageXY = null;
   }
 });
 
-function updateReadout() {
+// --- readouts ------------------------------------------------------------
+
+function updateReadouts() {
+  const c = stage.state.calibration;
   const el = document.getElementById("scale-readout");
-  el.textContent = readout(scaleState);
-  el.classList.toggle("calibrated", !!scaleState.pixelsPerFoot);
+  const perspEl = document.getElementById("persp-refs-readout");
+  if (c.mode === "uniform" && c.pixelsPerFoot) {
+    el.textContent = `Calibrated: ${c.pixelsPerFoot.toFixed(1)} px / ft`;
+    el.classList.add("calibrated");
+  } else if (c.mode === "perspective" && c.refs.length) {
+    el.textContent = `Perspective: ${c.refs.length} reference${c.refs.length > 1 ? "s" : ""}`;
+    el.classList.add("calibrated");
+  } else {
+    el.textContent = "Not calibrated yet.";
+    el.classList.remove("calibrated");
+  }
+  if (perspEl) {
+    perspEl.textContent = c.mode === "perspective" && c.refs.length
+      ? c.refs.map((r, i) =>
+          `ref ${i + 1}: ${r.pixelsPerFoot.toFixed(1)} px/ft @ y=${Math.round(r.imageY)}`).join("  •  ")
+      : "No references yet.";
+  }
 }
 
 // --- sculpture selection -------------------------------------------------
@@ -256,13 +323,23 @@ sourceKindSelect.addEventListener("change", () => {
 flipToggle.addEventListener("change", () => stage.setFlip(flipToggle.checked));
 shadowToggle.addEventListener("change", () => stage.setShadow(shadowToggle.checked));
 
+// Mirror the selected sculpture's flip/shadow state onto the toggles.
+function syncToggles() {
+  const sel = stage.getSelected();
+  if (!sel) return;
+  flipToggle.checked = !!sel.flip;
+  shadowToggle.checked = !!sel.shadow;
+}
+
 async function onSculpturePick(item) {
   selectedCatalogItem = item;
+  if (!stage.hasCalibration()) return;
   try {
     const source = await loadSource(item, sourceKindSelect.value);
-    stage.setSculpture(item, source);
-    stage.setFlip(flipToggle.checked);
-    stage.setShadow(shadowToggle.checked);
+    const entry = stage.addSculpture(item, source);
+    entry.flip = flipToggle.checked;
+    entry.shadow = shadowToggle.checked;
+    pushUndo({ kind: "add", id: entry.id });
     enableCard("export");
     setStep(4);
   } catch (err) {
@@ -270,6 +347,37 @@ async function onSculpturePick(item) {
     alert(`Could not load sculpture: ${err.message}`);
   }
 }
+
+// --- delete + undo -------------------------------------------------------
+
+const btnDelete = document.getElementById("btn-delete-selected");
+const btnUndo = document.getElementById("btn-undo");
+
+btnDelete.addEventListener("click", () => {
+  const sel = stage.getSelected();
+  if (!sel) return;
+  const removed = stage.removeSculpture(sel.id);
+  if (removed) pushUndo({ kind: "delete", sculpture: removed.sculpture, index: removed.index });
+  syncToggles();
+});
+
+btnUndo.addEventListener("click", () => {
+  const last = undoStack.pop();
+  updateUndoButton();
+  if (!last) return;
+  if (last.kind === "add") {
+    stage.removeSculpture(last.id);
+  } else if (last.kind === "delete") {
+    stage.restoreSculpture(last.sculpture, last.index);
+  } else if (last.kind === "move") {
+    const s = stage.state.sculptures.find((x) => x.id === last.id);
+    if (s) { s.position.imageX = last.from.imageX; s.position.imageY = last.from.imageY; }
+  }
+  syncToggles();
+});
+
+function updateUndoButton() { btnUndo.disabled = undoStack.length === 0; }
+updateUndoButton();
 
 // --- export --------------------------------------------------------------
 

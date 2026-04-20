@@ -70,12 +70,21 @@ export function createStage(canvas) {
 
   // --- calibration --------------------------------------------------------
 
-  // Depth-aware px-per-foot for a given image-Y. Uniform mode returns a
-  // constant. Perspective mode uses inverse-distance-squared averaging
-  // across all refs (Shepard's method, p=2) — exact at each ref, smooth
-  // between them, every ref contributes proportional to 1/d². Outside
-  // the calibrated Y-range we hard-clamp to the nearest endpoint value
-  // to prevent runaway extrapolation.
+  // Depth-aware px-per-foot for a given image-Y.
+  //
+  //  - Uniform mode: constant everywhere.
+  //  - Inside the calibrated Y-range: Shepard's method (p=2) weighted
+  //    average across all refs. Exact at each ref, smooth between, every
+  //    ref contributes proportional to 1/d².
+  //  - Past the near ref (toward the viewer): extrapolate along the slope
+  //    of the two closest refs so sculptures keep growing naturally. Cap
+  //    at CLOSE_CAP× the near-ref value to prevent a bad ref from blowing
+  //    up placements far past the range.
+  //  - Past the far ref (toward the horizon): same idea, shrink along the
+  //    slope down to FAR_MIN× of the far-ref value.
+  const CLOSE_CAP = 2.5;
+  const FAR_MIN = 0.05;
+
   function pixelsPerFootAt(imageY) {
     const c = state.calibration;
     if (c.mode === "uniform") return c.pixelsPerFoot;
@@ -83,13 +92,25 @@ export function createStage(canvas) {
     if (refs.length === 0) return null;
     if (refs.length === 1) return refs[0].pixelsPerFoot;
     const sorted = [...refs].sort((a, b) => a.imageY - b.imageY);
-    if (imageY <= sorted[0].imageY) return sorted[0].pixelsPerFoot;
+
+    if (imageY < sorted[0].imageY) {
+      const a = sorted[0], b = sorted[1];
+      const slope = (b.pixelsPerFoot - a.pixelsPerFoot) / (b.imageY - a.imageY || 1);
+      const extrap = a.pixelsPerFoot + (imageY - a.imageY) * slope;
+      return Math.max(a.pixelsPerFoot * FAR_MIN, Math.min(a.pixelsPerFoot, extrap));
+    }
     const last = sorted[sorted.length - 1];
-    if (imageY >= last.imageY) return last.pixelsPerFoot;
+    if (imageY > last.imageY) {
+      const a = last, b = sorted[sorted.length - 2];
+      const slope = (a.pixelsPerFoot - b.pixelsPerFoot) / (a.imageY - b.imageY || 1);
+      const extrap = a.pixelsPerFoot + (imageY - a.imageY) * slope;
+      return Math.max(a.pixelsPerFoot, Math.min(a.pixelsPerFoot * CLOSE_CAP, extrap));
+    }
+
     let wSum = 0, vSum = 0;
     for (const r of refs) {
       const d = Math.abs(imageY - r.imageY);
-      if (d < 0.5) return r.pixelsPerFoot; // effectively at this ref
+      if (d < 0.5) return r.pixelsPerFoot;
       const w = 1 / (d * d);
       wSum += w;
       vSum += w * r.pixelsPerFoot;

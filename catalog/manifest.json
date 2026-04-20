@@ -7,7 +7,7 @@
     "mp4": "sample-sculpture-8ft.mp4",
     "gif": "sample-sculpture-8ft.gif",
     "mp4HasAlpha": false,
-    "chromaKey": null,
+    "chromaKey": "#ff00ff",
     "thumb": "thumbs/sample-sculpture-8ft.png"
   },
   {
@@ -18,7 +18,7 @@
     "mp4": "sample-sculpture-6ft.mp4",
     "gif": "sample-sculpture-6ft.gif",
     "mp4HasAlpha": false,
-    "chromaKey": null,
+    "chromaKey": "#ff00ff",
     "thumb": "thumbs/sample-sculpture-6ft.png"
   }
 ]

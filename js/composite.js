@@ -70,13 +70,20 @@ export function createStage(canvas) {
 
   // --- calibration --------------------------------------------------------
 
-  // Depth-aware px-per-foot for a given image-Y. Uniform mode returns a
-  // constant. Perspective mode uses inverse-distance-weighted averaging
-  // across ALL references — closer refs dominate, but every ref contributes.
-  // This gives a smooth curve that passes exactly through each ref (up to
-  // floating point) and blends smoothly between them. Outside the range of
-  // refs, we clamp to the nearest endpoint so sculptures placed past the
-  // near ref don't explode in size.
+  // Depth-aware px-per-foot for a given image-Y.
+  //
+  //  - Uniform mode: constant everywhere.
+  //  - Perspective mode, inside the calibrated Y-range: inverse-distance^4
+  //    weighted average across ALL refs. Exact at each ref, smooth between,
+  //    nearby refs dominate strongly.
+  //  - Perspective mode, outside the calibrated range: linear extrapolation
+  //    along the slope of the two outermost refs, capped so a placement
+  //    far past the nearest ref can't explode. Cap is asymmetric — toward
+  //    the camera ppf can grow up to CLOSE_CAP×, toward the horizon it can
+  //    shrink to FAR_MIN× of the boundary value.
+  const CLOSE_CAP = 2.5; // max ppf multiplier beyond the closest ref
+  const FAR_MIN = 0.05;  // min ppf multiplier beyond the farthest ref
+
   function pixelsPerFootAt(imageY) {
     const c = state.calibration;
     if (c.mode === "uniform") return c.pixelsPerFoot;
@@ -84,18 +91,29 @@ export function createStage(canvas) {
     if (refs.length === 0) return null;
     if (refs.length === 1) return refs[0].pixelsPerFoot;
     const sorted = [...refs].sort((a, b) => a.imageY - b.imageY);
-    if (imageY <= sorted[0].imageY) return sorted[0].pixelsPerFoot;
+
+    if (imageY < sorted[0].imageY) {
+      // Past the far ref (toward horizon). Extrapolate using the slope of
+      // the two outermost "far-side" refs, then clamp.
+      const a = sorted[0], b = sorted[1];
+      const slope = (b.pixelsPerFoot - a.pixelsPerFoot) / (b.imageY - a.imageY || 1);
+      const extrap = a.pixelsPerFoot + (imageY - a.imageY) * slope;
+      return Math.max(a.pixelsPerFoot * FAR_MIN, Math.min(a.pixelsPerFoot, extrap));
+    }
     const last = sorted[sorted.length - 1];
-    if (imageY >= last.imageY) return last.pixelsPerFoot;
-    // Inverse-distance^4 weighting (Shepard's method, p=4). Higher exponent
-    // than the usual p=2: we want the nearest reference to dominate strongly
-    // whenever the sculpture is close to it. At the midpoint between two
-    // refs, each contributes ~50%; anywhere closer to one ref, that ref's
-    // weight takes over quickly.
+    if (imageY > last.imageY) {
+      // Past the near ref (toward the camera). Extrapolate outward, cap growth.
+      const a = last, b = sorted[sorted.length - 2];
+      const slope = (a.pixelsPerFoot - b.pixelsPerFoot) / (a.imageY - b.imageY || 1);
+      const extrap = a.pixelsPerFoot + (imageY - a.imageY) * slope;
+      return Math.max(a.pixelsPerFoot, Math.min(a.pixelsPerFoot * CLOSE_CAP, extrap));
+    }
+
+    // Inside the calibrated range: IDW with p=4.
     let wSum = 0, vSum = 0;
     for (const r of refs) {
       const d = Math.abs(imageY - r.imageY);
-      if (d < 0.5) return r.pixelsPerFoot; // effectively at this ref
+      if (d < 0.5) return r.pixelsPerFoot;
       const w = 1 / (d * d * d * d);
       wSum += w;
       vSum += w * r.pixelsPerFoot;

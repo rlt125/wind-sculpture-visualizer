@@ -11,6 +11,8 @@
 // stay neutral to calibration mode — perspective (depth-varying px/ft)
 // would otherwise require mapping feet back and forth constantly.
 
+import { getEstimator, DEFAULT_ESTIMATOR_ID, ESTIMATORS } from "./estimators/index.js";
+
 export function createStage(canvas) {
   const ctx = canvas.getContext("2d", { willReadFrequently: false });
 
@@ -28,9 +30,12 @@ export function createStage(canvas) {
     },
     calibOverlay: null,      // active calibration UI
     chroma: null,            // lazy offscreen canvas for chroma-key pass
+    estimatorId: DEFAULT_ESTIMATOR_ID,
+    estimatorModel: null,    // { pixelsPerFootAt, diagnostics } (rebuilt when refs change)
   };
 
   let nextId = 1;
+  let nextRefId = 1;
 
   // --- layout -------------------------------------------------------------
 
@@ -69,53 +74,36 @@ export function createStage(canvas) {
   }
 
   // --- calibration --------------------------------------------------------
-
-  // Depth-aware px-per-foot for a given image-Y.
   //
-  //  - Uniform mode: constant everywhere.
-  //  - Inside the calibrated Y-range: Shepard's method (p=2) weighted
-  //    average across all refs. Exact at each ref, smooth between, every
-  //    ref contributes proportional to 1/d².
-  //  - Past the near ref (toward the viewer): extrapolate along the slope
-  //    of the two closest refs so sculptures keep growing naturally. Cap
-  //    at CLOSE_CAP× the near-ref value to prevent a bad ref from blowing
-  //    up placements far past the range.
-  //  - Past the far ref (toward the horizon): same idea, shrink along the
-  //    slope down to FAR_MIN× of the far-ref value.
-  const CLOSE_CAP = 2.5;
-  const FAR_MIN = 0.05;
+  // Depth-aware px-per-foot for a given image-Y.
+  //  - Uniform mode: constant everywhere (single scalar).
+  //  - Perspective mode: delegates to the currently-selected estimator from
+  //    js/estimators/*. Each estimator implements its own interpretation of
+  //    the reference list (midpoint-Y IDW, horizon-line fits, etc.).
+  //
+  // Each ref stores the raw click data + known height; estimators derive
+  // whatever (base-Y, pixel height, diagonal ppf, …) from that on the fly.
+  // `imageY` and `pixelsPerFoot` are kept on each ref for the overlay/
+  // outlier display, computed using midpoint-Y + diagonal so legacy UI
+  // readouts stay stable across model choice.
+
+  function rebuildEstimatorModel() {
+    const c = state.calibration;
+    if (c.mode !== "perspective" || c.refs.length === 0) {
+      state.estimatorModel = null;
+      return;
+    }
+    const est = getEstimator(state.estimatorId);
+    const ctx = { imageHeight: state.photo ? state.photo.naturalHeight : canvas.height };
+    state.estimatorModel = est.build(c.refs, ctx);
+  }
 
   function pixelsPerFootAt(imageY) {
     const c = state.calibration;
     if (c.mode === "uniform") return c.pixelsPerFoot;
-    const refs = c.refs;
-    if (refs.length === 0) return null;
-    if (refs.length === 1) return refs[0].pixelsPerFoot;
-    const sorted = [...refs].sort((a, b) => a.imageY - b.imageY);
-
-    if (imageY < sorted[0].imageY) {
-      const a = sorted[0], b = sorted[1];
-      const slope = (b.pixelsPerFoot - a.pixelsPerFoot) / (b.imageY - a.imageY || 1);
-      const extrap = a.pixelsPerFoot + (imageY - a.imageY) * slope;
-      return Math.max(a.pixelsPerFoot * FAR_MIN, Math.min(a.pixelsPerFoot, extrap));
-    }
-    const last = sorted[sorted.length - 1];
-    if (imageY > last.imageY) {
-      const a = last, b = sorted[sorted.length - 2];
-      const slope = (a.pixelsPerFoot - b.pixelsPerFoot) / (a.imageY - b.imageY || 1);
-      const extrap = a.pixelsPerFoot + (imageY - a.imageY) * slope;
-      return Math.max(a.pixelsPerFoot, Math.min(a.pixelsPerFoot * CLOSE_CAP, extrap));
-    }
-
-    let wSum = 0, vSum = 0;
-    for (const r of refs) {
-      const d = Math.abs(imageY - r.imageY);
-      if (d < 0.5) return r.pixelsPerFoot;
-      const w = 1 / (d * d);
-      wSum += w;
-      vSum += w * r.pixelsPerFoot;
-    }
-    return vSum / wSum;
+    if (c.refs.length === 0) return null;
+    if (!state.estimatorModel) rebuildEstimatorModel();
+    return state.estimatorModel ? state.estimatorModel.pixelsPerFootAt(imageY) : null;
   }
 
   function hasCalibration() {
@@ -126,36 +114,65 @@ export function createStage(canvas) {
 
   function setUniformCalibration(ppf, p1, p2) {
     state.calibration = { mode: "uniform", pixelsPerFoot: ppf, refs: [], marker: p1 && p2 ? { p1, p2 } : null };
+    state.estimatorModel = null;
   }
 
-  function addPerspectiveRef(imageY, ppf, p1, p2) {
+  // Create a ref record from raw clicks + known real-world height (feet).
+  // Derived `imageY` (midpoint) and `pixelsPerFoot` (diagonal) are kept for
+  // the overlay/outlier readouts; the estimator modules re-derive what they
+  // need from p1/p2/knownFeet directly.
+  function makeRefRecord(p1, p2, knownFeet) {
+    const pixelDist = Math.hypot(p2.x - p1.x, p2.y - p1.y) || 1;
+    return {
+      id: nextRefId++,
+      p1, p2, knownFeet,
+      imageY: (p1.y + p2.y) / 2,
+      pixelsPerFoot: pixelDist / knownFeet,
+    };
+  }
+
+  function addPerspectiveRef(p1, p2, knownFeet) {
     if (state.calibration.mode !== "perspective") {
       // Auto-upgrade from uniform: carry over the existing uniform ref (with
       // its clicked points, if any) as the first perspective ref.
       const prev = state.calibration;
       state.calibration = { mode: "perspective", pixelsPerFoot: null, refs: [] };
-      if (prev.pixelsPerFoot) {
-        const prevY = prev.marker
-          ? (prev.marker.p1.y + prev.marker.p2.y) / 2
-          : (state.photo ? state.photo.naturalHeight * 0.75 : 0);
-        state.calibration.refs.push({
-          imageY: prevY,
-          pixelsPerFoot: prev.pixelsPerFoot,
-          p1: prev.marker?.p1, p2: prev.marker?.p2,
-        });
+      if (prev.pixelsPerFoot && prev.marker) {
+        const diag = Math.hypot(prev.marker.p2.x - prev.marker.p1.x, prev.marker.p2.y - prev.marker.p1.y) || 1;
+        const prevKnownFeet = diag / prev.pixelsPerFoot;
+        state.calibration.refs.push(makeRefRecord(prev.marker.p1, prev.marker.p2, prevKnownFeet));
       }
     }
-    state.calibration.refs.push({ imageY, pixelsPerFoot: ppf, p1, p2 });
+    state.calibration.refs.push(makeRefRecord(p1, p2, knownFeet));
+    rebuildEstimatorModel();
   }
 
   function clearCalibration() {
     state.calibration = { mode: "uniform", pixelsPerFoot: null, refs: [] };
+    state.estimatorModel = null;
   }
 
   function removePerspectiveRef(idx) {
     if (state.calibration.mode !== "perspective") return;
     state.calibration.refs.splice(idx, 1);
-    if (state.calibration.refs.length === 0) clearCalibration();
+    if (state.calibration.refs.length === 0) {
+      clearCalibration();
+    } else {
+      rebuildEstimatorModel();
+    }
+  }
+
+  function setEstimator(id) {
+    state.estimatorId = id;
+    rebuildEstimatorModel();
+  }
+
+  function listEstimators() {
+    return ESTIMATORS.map((e) => ({ id: e.id, name: e.name, short: e.short }));
+  }
+
+  function getEstimatorDiagnostics() {
+    return state.estimatorModel?.diagnostics || null;
   }
 
   // --- sculptures ---------------------------------------------------------
@@ -525,6 +542,8 @@ export function createStage(canvas) {
     // calibration
     setUniformCalibration, addPerspectiveRef, clearCalibration, removePerspectiveRef,
     hasCalibration, pixelsPerFootAt,
+    setEstimator, listEstimators, getEstimatorDiagnostics,
+    get estimatorId() { return state.estimatorId; },
     // sculptures
     addSculpture, removeSculpture, restoreSculpture, selectSculpture,
     getSelected, setFlip, setShadow, setSelectedScale, resetSelectedScale,

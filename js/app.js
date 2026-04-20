@@ -263,6 +263,19 @@ canvas.addEventListener("pointermove", (e) => {
   dragAnchor = { x, y };
 });
 
+// Right-click on a sculpture removes it (and pushes to undo so the delete
+// can be reversed with Ctrl+Z or the Undo button).
+canvas.addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+  if (!stage.hasCalibration()) return;
+  const { x, y } = stage.eventToCanvas(e);
+  const hitId = stage.sculptureAtPoint(x, y);
+  if (hitId == null) return;
+  const removed = stage.removeSculpture(hitId);
+  if (removed) pushUndo({ kind: "delete", sculpture: removed.sculpture, index: removed.index });
+  syncToggles();
+});
+
 canvas.addEventListener("pointerup", (e) => {
   if (interactionMode === "drag") {
     canvas.releasePointerCapture(e.pointerId);
@@ -361,7 +374,7 @@ btnDelete.addEventListener("click", () => {
   syncToggles();
 });
 
-btnUndo.addEventListener("click", () => {
+function undoLast() {
   const last = undoStack.pop();
   updateUndoButton();
   if (!last) return;
@@ -374,9 +387,23 @@ btnUndo.addEventListener("click", () => {
     if (s) { s.position.imageX = last.from.imageX; s.position.imageY = last.from.imageY; }
   }
   syncToggles();
+}
+
+btnUndo.addEventListener("click", undoLast);
+
+// Ctrl+Z / Cmd+Z — ignore if the user is typing in an input/textarea/select.
+window.addEventListener("keydown", (e) => {
+  if (!(e.key === "z" || e.key === "Z") || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+  e.preventDefault();
+  undoLast();
 });
 
-function updateUndoButton() { btnUndo.disabled = undoStack.length === 0; }
+function updateUndoButton() {
+  btnUndo.disabled = undoStack.length === 0;
+  document.getElementById("undo-count").textContent = undoStack.length ? String(undoStack.length) : "";
+}
 updateUndoButton();
 
 // --- export --------------------------------------------------------------

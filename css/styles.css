@@ -183,6 +183,27 @@ button.ghost {
 
 button.ghost:hover { color: var(--text); border-color: var(--muted); }
 
+button[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.toolbar {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  margin: 10px 0;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.badge:empty { display: none; }
+
 input[type="number"],
 input[type="text"],
 select {
